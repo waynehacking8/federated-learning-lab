@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.pytest_cache/
+
+# Virtual envs
+.venv/
+venv/
+env/
+.env
+
+# Notebook checkpoints
+.ipynb_checkpoints/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Build / dist
+build/
+dist/
+*.egg
+
+# Data
+data/
+*.pt
+*.pth
+*.ckpt
+
+# Results cache (commit key plots manually with git add -f)
+results/cache/
+*.log
+
+# wandb / mlflow
+wandb/
+mlruns/
