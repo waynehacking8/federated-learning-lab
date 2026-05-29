@@ -39,6 +39,33 @@ Curated reading list, ordered from "required" to "background".
    An Experimental Study.* — Empirical comparison of FedAvg /
    FedProx / SCAFFOLD across many Non-IID regimes.
 
+### Convergence theory (the two papers that anchor FedAvg analysis)
+
+9a. **Li et al. (ICLR 2020)** *On the Convergence of FedAvg on
+    Non-IID Data.* arXiv:1907.02189. — Strongly-convex + L-smooth
+    analysis; introduces `Γ` as the heterogeneity measure; shows the
+    learning rate must decay or a residual gap remains.
+9b. **Khaled et al. (AISTATS 2020)** *Tighter Theory for Local SGD on
+    Identical and Heterogeneous Data.* arXiv:1909.04746. — Non-convex
+    analysis under bounded variance + bounded heterogeneity, no
+    bounded-gradient assumption; gives the `O(1/√(NKT))` rate that
+    underpins every communication-efficient FL paper since.
+
+### Personalized federated learning
+
+9c. **Arivazhagan et al. (2019)** *Federated Learning with
+    Personalization Layers.* arXiv:1912.00818. — FedPer: federate
+    body, keep classifier head local. Roadmap Phase 7 reference.
+9d. **Collins et al. (ICML 2021)** *Exploiting Shared Representations
+    for Personalized Federated Learning.* — FedRep: refines the
+    representation-vs-head split with a learning-rate schedule.
+9e. **Fallah, Mokhtari, Ozdaglar (NeurIPS 2020)** *Personalized
+    Federated Learning: A Meta-Learning Approach.* — Per-FedAvg:
+    MAML-style "good initialization for one-step adaptation".
+9f. **Shamsian et al. (ICML 2021)** *Personalized Federated Learning
+    using Hypernetworks.* — pFedHN: a shared hypernetwork generates
+    per-client weights from a learned client embedding.
+
 ---
 
 ## Modern extensions
@@ -120,6 +147,27 @@ FL** compresses the protocol to a single communication round.
   attack contagion** by carrying malicious gradient direction in
   $c_i$. A non-trivial robustness regression versus FedAvg in
   adversarial deployments.
+
+### Federated multi-agent systems (the post-2025 frontier)
+
+- **Su et al. (ICML 2025)** *EPEAgents: Privacy-Enhancing Paradigms
+  within Federated Multi-Agent Systems.* arXiv:2503.08175. — First
+  paper to articulate "Federated MAS" as a distinct problem from
+  classic FL: the unit of exchange is *messages between agents*,
+  not gradients. Proposes a role-aware privacy intermediary that
+  filters retrieval and context at the point of inter-agent
+  communication. Out of scope as code, but the closest published
+  match to the FedGPT AgentTeam product direction.
+
+### Gradient leakage (why FL still needs DP and SecAgg)
+
+- **Zhu, Liu, Han (NeurIPS 2019)** *Deep Leakage from Gradients
+  (DLG).* — The canonical demonstration that gradients can be
+  inverted to recover the input image. Roadmap Phase 8.3 reproduces
+  a toy version and shows DP-SGD breaks the reconstruction.
+- **Geiping et al. (NeurIPS 2020)** *Inverting Gradients — How easy
+  is it to break privacy in federated learning?* — Strengthened
+  DLG attack using cosine-similarity loss.
 
 ---
 

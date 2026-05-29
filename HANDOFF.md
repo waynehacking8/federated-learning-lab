@@ -118,10 +118,33 @@ MNIST). Concretely:
    - Run DP-FedAvg with `(C=1, σ=1)`; expect accuracy ≥ 0.90 at
      100 rounds on IID.
 
-10. **(Stretch) FedLoRA** if time remains:
-    - Federated fine-tuning of DistilBERT-class model on a small
-      text-classification task. Out of current spec; add a
-      `D{n}` design-decision entry if you start.
+10. **(Stretch) Phase 6 — SecAgg skeleton**:
+    - `privacy/secagg.py` additive secret-sharing demo (3 clients).
+    - Notebook shows the server-side sum reconstructs without seeing
+      individual updates.
+
+11. **(Stretch) Phase 7 — Personalized FL (FedPer)**:
+    - `fl/algorithms/fedper.py` — federate body, keep classifier head
+      local. See `docs/specifications.md` §10.
+    - Acceptance: on Dir(α=0.1), FedPer's mean per-client accuracy is
+      ≥ FedAvg's by ≥ 3 points at round 50.
+
+12. **(Stretch) Phase 8 — Robust aggregation + DLG demo**:
+    - `fl/algorithms/robust.py` — median, Krum, trimmed mean.
+    - `privacy/dlg.py` — reproduce Deep Leakage from Gradients on a
+      single MNIST image; rerun with DP-SGD noise; show DP breaks
+      reconstruction. See `docs/specifications.md` §§11–12.
+
+13. **(Stretch) Phase 9 — FedAdam (server-side adaptive optimizer)**:
+    - `fl/algorithms/fedopt.py` — treat the average client delta as a
+      pseudo-gradient; apply Adam/Yogi/Adagrad on the server side.
+    - See `docs/specifications.md` §13.
+
+14. **(Stretch) Phase 10 — FedLoRA prototype**:
+    - `fl/algorithms/fedlora.py` — FedIT baseline (FedAvg over LoRA
+      adapters) + FedSA-LoRA (share only the `A` matrix).
+    - Small text-classification task (AG News or SST-2) on a frozen
+      DistilBERT-class base. See `docs/specifications.md` §14.
 
 ---
 
@@ -155,8 +178,11 @@ Then flip checkboxes in `docs/roadmap.md` to `[x]` and commit.
 1. `docs/specifications.md` — concrete formulas, hyperparameters,
    reference metrics.
 2. `docs/algorithms.md` — algorithmic intent (FedAvg / FedProx /
-   SCAFFOLD derivations).
-3. `docs/design-decisions.md` — "why this, not that".
-4. `AGENTS.md` — conventions.
-5. Add a new `D{n}` entry rather than silently contradicting
+   SCAFFOLD derivations) + personalized FL + FedLoRA family.
+3. `docs/design-decisions.md` — "why this, not that" (D1–D11).
+4. `docs/interview-map.md` — cross-reference from Taiwan AI Labs
+   interview-prep notes to repo files; tells you which talking
+   points each phase backs up.
+5. `AGENTS.md` — conventions.
+6. Add a new `D{n}` entry rather than silently contradicting
    an existing decision.
