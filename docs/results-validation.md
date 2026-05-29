@@ -253,3 +253,28 @@ why we report the FAIL honestly rather than tuning to a PASS.
 - Reddi et al. 2020, *Adaptive Federated Optimization* (FedAdam/FedYogi).
 - Sun et al. 2024 (FedIT); Guo et al. 2025 (FedSA-LoRA) --
   <https://arxiv.org/abs/2410.01463>
+
+---
+
+## 12. E-sweep (Phase 2.2) -- larger E helps on *mild* Non-IID
+
+**Observed:** FedAvg on Dir(0.1), K=10: E=1 -> 0.966, E=5 -> 0.980,
+E=10 -> 0.982 (rounds-to-0.90: 8 / 4 / 3). Larger E converges faster and
+slightly higher -- the opposite of the naive "larger E -> more drift"
+claim.
+
+**Why (and why it is not a contradiction):** the "larger E increases
+client drift" result (Khaled 2020; FedProx motivation) bites under
+*severe* heterogeneity, where each client's local optimum is far from the
+global one. Dir(0.1) on 10 fully-participating clients is only mildly
+Non-IID (every client still sees a tail of all classes), so the extra
+local compute from large E dominates the small drift it adds. The drift
+penalty appears under sharp skew (label_skew(2), where the unified sweep
+shows FedAvg plateauing well below IID). The E trade-off is
+partition-severity-dependent -- same lesson as the mu-sweep, the SCAFFOLD
+client-count finding, and the FedPer/FedAdam saturation: a single mild
+benchmark hides effects that only a harder regime exposes.
+
+**Literature anchor:** Khaled et al. 2020 (local-SGD bound with the local
+steps trade-off); the drift cost scales with the heterogeneity constant,
+which is small for mild Dirichlet.
