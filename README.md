@@ -49,47 +49,60 @@ Non-IID degradation** over scale or production hardening.
 ```
 federated-learning-lab/
 ├── fl/
-│   ├── server.py               # Aggregator: collects updates, averages, broadcasts
-│   ├── client.py               # Local trainer: receives model, trains, returns delta
+│   ├── server.py                  # Aggregator: collects updates, averages, broadcasts
+│   ├── client.py                  # Local trainer: receives model, trains, returns delta
 │   ├── algorithms/
-│   │   ├── fedavg.py           # Vanilla FedAvg
-│   │   ├── fedprox.py          # Proximal term against client drift
-│   │   └── scaffold.py         # Control variates against client drift
+│   │   ├── fedavg.py              # Vanilla FedAvg
+│   │   ├── fedprox.py             # Proximal-term hook (client-side grad)
+│   │   └── scaffold.py            # Control variates + server-side aggregator
 │   ├── datasets/
-│   │   └── mnist_partition.py  # Label-skew, quantity-skew, Dirichlet-alpha
+│   │   └── mnist_partition.py     # IID, label-skew, Dirichlet-alpha
 │   └── models/
-│       └── cnn.py              # Small CNN for MNIST (2 conv + 2 fc)
+│       └── cnn.py                 # Small CNN for MNIST (~46k params)
 ├── privacy/
-│   ├── dp.py                   # DP-SGD: gradient clipping + Gaussian noise
-│   └── secagg.py               # Additive secret sharing skeleton
+│   ├── dp.py                      # DP-SGD primitives + DPSGDClient (vmap)
+│   └── secagg.py                  # Additive secret sharing skeleton
 ├── scripts/
-│   └── run_fedavg_mnist.py     # End-to-end experiment runner
-├── docs/
-│   ├── algorithms.md
-│   ├── design-decisions.md
-│   ├── roadmap.md
-│   └── references.md
-└── results/                    # Convergence plots, ablations
+│   ├── experiment.py              # Shared experiment scaffolding
+│   ├── run_fedavg_mnist.py        # FedAvg runner
+│   ├── run_fedprox_mnist.py       # FedProx runner
+│   ├── run_scaffold_mnist.py      # SCAFFOLD runner
+│   ├── run_dp_fedavg.py           # DP-FedAvg runner
+│   ├── secagg_demo.py             # Toy 3-client SecAgg demo
+│   ├── run_all.py                 # Phase 1-4 in one process
+│   ├── make_comparison_plots.py   # Cross-algorithm plot
+│   └── make_summary.py            # SUMMARY.md from all metrics.json
+├── docs/                          # algorithms, specs, design decisions, roadmap, refs
+└── results/                       # Per-run artifacts + SUMMARY.md
 ```
 
 ---
 
-## Quick start (planned)
+## Quick start
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
+pip install pytest
 
-# Run FedAvg on MNIST with 10 clients, label-skew partition
-python -m scripts.run_fedavg_mnist \
-    --num-clients 10 \
-    --partition label_skew \
-    --rounds 50 \
-    --local-epochs 5
+# Run a single algorithm.
+python -m scripts.run_fedavg_mnist  --partition iid       --rounds 15
+python -m scripts.run_fedavg_mnist  --partition dirichlet --alpha 0.1 --rounds 25
+python -m scripts.run_fedprox_mnist --partition dirichlet --alpha 0.1 --mu 0.01 --rounds 25
+python -m scripts.run_scaffold_mnist --partition dirichlet --alpha 0.1 --rounds 25
+python -m scripts.run_dp_fedavg     --partition iid       --rounds 20 --noise-sigma 1.0
+python -m scripts.secagg_demo
+
+# Or run the full phase 1-4 sweep in one go (sequential, ~45 min on a single GPU).
+python -m scripts.run_all
+
+# Build the cross-experiment summary after any combination of runs.
+python -m scripts.make_summary
 ```
 
-Expected output: per-round global test accuracy on MNIST, plus a final
-convergence plot at ``results/fedavg_mnist.png``.
+Each experiment writes ``results/<name>/{metrics.json, curve.png, REPORT.md}``.
+``run_all`` additionally produces ``results/three_way_comparison.png`` and
+``results/THREE_WAY_REPORT.md``; ``make_summary`` produces ``results/SUMMARY.md``.
 
 ---
 

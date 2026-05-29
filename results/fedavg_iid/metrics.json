@@ -1,0 +1,113 @@
+{
+  "config": {
+    "algorithm": "fedavg",
+    "partition": "iid",
+    "num_clients": 10,
+    "classes_per_client": 2,
+    "alpha": 0.1,
+    "rounds": 15,
+    "local_epochs": 5,
+    "local_lr": 0.01,
+    "batch_size": 64,
+    "participation_rate": 1.0,
+    "mu": 0.01,
+    "seed": 0,
+    "device": "cuda",
+    "output_dir": "results/fedavg_iid",
+    "log_every": 1
+  },
+  "history": [
+    {
+      "round": 1,
+      "n_clients": 10,
+      "test_loss": 0.2780142616271973,
+      "test_acc": 0.922
+    },
+    {
+      "round": 2,
+      "n_clients": 10,
+      "test_loss": 0.1658483257293701,
+      "test_acc": 0.9526
+    },
+    {
+      "round": 3,
+      "n_clients": 10,
+      "test_loss": 0.12165675830841065,
+      "test_acc": 0.9637
+    },
+    {
+      "round": 4,
+      "n_clients": 10,
+      "test_loss": 0.09673819828033448,
+      "test_acc": 0.9693
+    },
+    {
+      "round": 5,
+      "n_clients": 10,
+      "test_loss": 0.08221600866317749,
+      "test_acc": 0.9754
+    },
+    {
+      "round": 6,
+      "n_clients": 10,
+      "test_loss": 0.07209856157302856,
+      "test_acc": 0.9781
+    },
+    {
+      "round": 7,
+      "n_clients": 10,
+      "test_loss": 0.06433893852233886,
+      "test_acc": 0.9805
+    },
+    {
+      "round": 8,
+      "n_clients": 10,
+      "test_loss": 0.059918905544281004,
+      "test_acc": 0.9821
+    },
+    {
+      "round": 9,
+      "n_clients": 10,
+      "test_loss": 0.05624285202026367,
+      "test_acc": 0.9835
+    },
+    {
+      "round": 10,
+      "n_clients": 10,
+      "test_loss": 0.053179530763626096,
+      "test_acc": 0.984
+    },
+    {
+      "round": 11,
+      "n_clients": 10,
+      "test_loss": 0.0503420431137085,
+      "test_acc": 0.9841
+    },
+    {
+      "round": 12,
+      "n_clients": 10,
+      "test_loss": 0.04751964507102966,
+      "test_acc": 0.9856
+    },
+    {
+      "round": 13,
+      "n_clients": 10,
+      "test_loss": 0.047820902967453005,
+      "test_acc": 0.985
+    },
+    {
+      "round": 14,
+      "n_clients": 10,
+      "test_loss": 0.045357825469970706,
+      "test_acc": 0.9854
+    },
+    {
+      "round": 15,
+      "n_clients": 10,
+      "test_loss": 0.043821392774581906,
+      "test_acc": 0.9863
+    }
+  ],
+  "final_acc": 0.9863,
+  "wall_seconds": 466.99380445480347
+}

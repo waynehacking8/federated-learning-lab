@@ -136,6 +136,51 @@ SecAgg" as the production upgrade path.
 
 ---
 
+## D9. CNN parameter count is 46,706, not 21,706
+
+**Decision:** Implement the architecture as stated in
+`specifications.md` section 1 (Conv 1->16, Conv 16->32, FC 512->64,
+FC 64->10) and accept the actual parameter count of 46,706. The
+"21,706" figure in the spec is a miscalculation; the architecture is
+the contract.
+
+**Why:** The architecture is the canonical LeNet-style CNN used in
+McMahan 2017 and almost every subsequent FL paper on MNIST. Changing
+the channel widths or FC dimensions to hit 21,706 would diverge from
+the reference architecture for no methodological benefit.
+
+**What changed:** `make_mnist_cnn()` no longer asserts a specific
+parameter count; callers can use `parameter_count(model)` for
+introspection.
+
+---
+
+## D10. SCAFFOLD's ranking is client-count dependent (label_skew finding)
+
+**Observation, not a design choice:** On label_skew(2 of 10 classes),
+SCAFFOLD goes from *worst* of the trio at 10 clients (final 0.686 vs
+FedAvg 0.822) to *best* at 100 clients (0.918 vs 0.885). See
+`results/LABELSKEW_REPORT.md` and `results/K100_LABELSKEW_REPORT.md`.
+
+**Why this happens:** SCAFFOLD's correction `g - c_local + c_global`
+relies on the control variates being good estimates of gradient
+direction. The server variate `c_global` is the mean of all client
+variates. With 10 severely-skewed clients (2 classes each, 5 local
+epochs) every `c_local` is estimated from a tiny biased slice, so their
+mean is noisy and the correction degrades convergence. At 100 clients
+the mean of 100 noisy variates is a far better estimate -- the
+variance-reduction regime SCAFFOLD targets. FedProx mu=0.1 shows a
+milder version: it costs 2 pp at K=10 (over-anchoring to a drifting
+global model) but is neutral at K=100 (the global model is stable).
+
+**Takeaway for the lab:** never rank drift-correction algorithms from a
+single small-scale experiment. Client count is a first-order variable,
+not a footnote. This is also why the spec's Dirichlet(0.1) on 10
+clients was too mild to separate the algorithms (all within 1 pp) --
+documented earlier as the reason the label_skew sweep was added.
+
+---
+
 ## D8. Why include this `design-decisions.md`?
 
 Same reasoning as the sibling `iot-pdm-pipeline` repo: forcing the
