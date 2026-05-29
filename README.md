@@ -130,9 +130,43 @@ problem isolates the algorithmic trade-off cleanly. See
 
 ---
 
+## Field context (why this matters in 2026)
+
+This prototype implements the **unit test** for the FL stack that sits
+underneath modern on-prem LLM deployments — FedGPT, NVIDIA FLARE,
+Flower, the Google Federated Computing Platform, and the sovereign-AI
+deployments now appearing in Korea (Naver-BOK), Europe (Mistral),
+Japan (Sakana), and Taiwan (Taiwan AI Labs).
+
+Key 2024–2026 papers and systems that build directly on the
+algorithms reimplemented here:
+
+- **FedSA-LoRA** (ICLR 2025) — share only the $A$ matrix in LoRA
+  fine-tuning; SCAFFOLD-class drift correction continues to matter.
+- **One-shot FL with diffusion** (arXiv 2505.02426) — compresses
+  multi-round FL into one round using synthetic data; outperforms
+  multi-round FedAvg on medical imaging.
+- **Apple Private Cloud Compute** (2024) — the consumer InstructGPT
+  moment for private AI; the template every sovereign-AI deployment
+  is now measured against.
+- **NVIDIA H100 / H200 / B200 confidential computing** — measured 70B
+  inference overhead approaches zero; B200 TEE-I/O removes the last
+  bottleneck.
+- **TEE.Fail / Battering RAM / GPUBreach** (2025–2026) — TEE is
+  necessary but not sufficient; physical security and ephemeral key
+  rotation matter.
+
+See [`docs/field-evolution.md`](docs/field-evolution.md) for the
+narrative, the five core mental models, the three live disagreements
+in the field, and the "GPT-moment" question.
+
+---
+
 ## References
 
-See [`docs/references.md`](docs/references.md). Core papers:
+See [`docs/references.md`](docs/references.md) for the full reading list
+(now extended with the 2024–2026 sovereign-AI / confidential-computing
+/ verifiable-inference lineage). Core foundational papers:
 
 1. McMahan et al. (2017) — *Communication-Efficient Learning of Deep
    Networks from Decentralized Data* (FedAvg).
@@ -144,6 +178,12 @@ See [`docs/references.md`](docs/references.md). Core papers:
    (DP-SGD).
 5. Bonawitz et al. (2017) — *Practical Secure Aggregation for
    Privacy-Preserving Machine Learning*.
+6. Khaled et al. (2020) — *Tighter Theory for Local SGD on Identical
+   and Heterogeneous Data*.
+7. FedSA-LoRA (ICLR 2025) — *Selective Aggregation for Federated
+   Low-Rank Adaptation*.
+8. Apple (2024) — *Private Cloud Compute: A new frontier for AI
+   privacy in the cloud.*
 
 ---
 

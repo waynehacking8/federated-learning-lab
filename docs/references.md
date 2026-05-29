@@ -39,6 +39,33 @@ Curated reading list, ordered from "required" to "background".
    An Experimental Study.* — Empirical comparison of FedAvg /
    FedProx / SCAFFOLD across many Non-IID regimes.
 
+### Convergence theory (the two papers that anchor FedAvg analysis)
+
+9a. **Li et al. (ICLR 2020)** *On the Convergence of FedAvg on
+    Non-IID Data.* arXiv:1907.02189. — Strongly-convex + L-smooth
+    analysis; introduces `Γ` as the heterogeneity measure; shows the
+    learning rate must decay or a residual gap remains.
+9b. **Khaled et al. (AISTATS 2020)** *Tighter Theory for Local SGD on
+    Identical and Heterogeneous Data.* arXiv:1909.04746. — Non-convex
+    analysis under bounded variance + bounded heterogeneity, no
+    bounded-gradient assumption; gives the `O(1/√(NKT))` rate that
+    underpins every communication-efficient FL paper since.
+
+### Personalized federated learning
+
+9c. **Arivazhagan et al. (2019)** *Federated Learning with
+    Personalization Layers.* arXiv:1912.00818. — FedPer: federate
+    body, keep classifier head local. Roadmap Phase 7 reference.
+9d. **Collins et al. (ICML 2021)** *Exploiting Shared Representations
+    for Personalized Federated Learning.* — FedRep: refines the
+    representation-vs-head split with a learning-rate schedule.
+9e. **Fallah, Mokhtari, Ozdaglar (NeurIPS 2020)** *Personalized
+    Federated Learning: A Meta-Learning Approach.* — Per-FedAvg:
+    MAML-style "good initialization for one-step adaptation".
+9f. **Shamsian et al. (ICML 2021)** *Personalized Federated Learning
+    using Hypernetworks.* — pFedHN: a shared hypernetwork generates
+    per-client weights from a learned client embedding.
+
 ---
 
 ## Modern extensions
@@ -64,15 +91,209 @@ Curated reading list, ordered from "required" to "background".
     Federated Learning for Open-Source LLMs.* — Multiple LoRA ranks
     across heterogeneous clients.
 
+### Heterogeneous LoRA — the rank-mismatch problem family
+
+The fundamental issue: across clients, neither rank nor adapter
+content is homogeneous, and naïvely averaging $A_i$ and $B_i$
+separately incurs aggregation noise because $\overline{B}\,\overline{A}
+\neq \overline{BA}$. Four lines of attack:
+
+- **FlexLoRA** — reconstruct each client's $B_iA_i$ at the server,
+  perform full-size SVD, redistribute to each client at its own rank.
+  Cost: server-side SVD.
+- **HetLoRA** — zero-pad each client's LoRA to a common shape, then
+  sparsity-weight the aggregation. Cost: brittle to outlier clients.
+- **FLoRA** — stack rather than average, eliminating the
+  $\overline{BA}$ approximation error. Cost: client-side merge.
+- **SLoRA** — two-stage sparse pretraining initialization to absorb
+  data heterogeneity before LoRA tuning.
+- **FedSA-LoRA** (ICLR 2025, arXiv:2410.01463) — share only $A$,
+  keep $B$ local. Rationale: $A$ encodes shared structure, $B$
+  encodes client-specific structure. This single change reduces
+  communication, makes model-inversion attacks harder, and provides
+  personalization for free.
+
+### One-shot FL (2025 frontier)
+
+Multi-round FL is expensive and amplifies privacy leakage. **One-shot
+FL** compresses the protocol to a single communication round.
+
+- **FedDISC**, **DENSE**, **Co-Boosting** — server-side diffusion or
+  rectified-flow models synthesize pseudo-data; clients upload
+  distilled samples; the server distills the global model from the
+  ensemble. Outperforms multi-round FedAvg by up to 21.73% on medical
+  imaging tasks (see survey arXiv:2505.02426).
+
+### Byzantine-robust FL and its modern caveats
+
+- **Blanchard et al. (NeurIPS 2017)** — **Krum** / **Multi-Krum**:
+  pick the update with the smallest sum of distances to its closest
+  $n-f-2$ neighbors. Tolerates $f < (n-2)/2$ adversaries.
+- **Yin et al. (ICML 2018)** — **Coordinate-wise Median**: cheap,
+  effective against outliers, weak against colluding attacks.
+- **Mhamdi et al. (ICML 2018)** — **Bulyan**: two-stage Krum +
+  trimmed-mean; strongest theoretical guarantee, $O(n^2 d)$ cost.
+- **Liu et al. (ICML 2023)** — robust aggregation under heterogeneous
+  data via gradient splitting. **Most prior Byzantine-robust
+  aggregators silently fail under Non-IID data** because honest
+  clients themselves diverge.
+- **NDSS 2025** — systematic re-examination of prior Byzantine-robust
+  aggregators; finds attack surface that earlier evaluations missed.
+
+### A 2024 caveat for SCAFFOLD
+
+- **arXiv:2411.16167** — *Mind the Cost of Scaffold for Federated
+  Learning.* Shows that SCAFFOLD's control variates **amplify backdoor
+  attack contagion** by carrying malicious gradient direction in
+  $c_i$. A non-trivial robustness regression versus FedAvg in
+  adversarial deployments.
+
+### Federated multi-agent systems (the post-2025 frontier)
+
+- **Su et al. (ICML 2025)** *EPEAgents: Privacy-Enhancing Paradigms
+  within Federated Multi-Agent Systems.* arXiv:2503.08175. — First
+  paper to articulate "Federated MAS" as a distinct problem from
+  classic FL: the unit of exchange is *messages between agents*,
+  not gradients. Proposes a role-aware privacy intermediary that
+  filters retrieval and context at the point of inter-agent
+  communication. Out of scope as code, but the closest published
+  match to the FedGPT AgentTeam product direction.
+
+### Gradient leakage (why FL still needs DP and SecAgg)
+
+- **Zhu, Liu, Han (NeurIPS 2019)** *Deep Leakage from Gradients
+  (DLG).* — The canonical demonstration that gradients can be
+  inverted to recover the input image. Roadmap Phase 8.3 reproduces
+  a toy version and shows DP-SGD breaks the reconstruction.
+- **Geiping et al. (NeurIPS 2020)** *Inverting Gradients — How easy
+  is it to break privacy in federated learning?* — Strengthened
+  DLG attack using cosine-similarity loss.
+
 ---
 
 ## Production frameworks (for context, not reimplemented)
 
-15. **Flower** (`flwr.dev`) — Pythonic FL framework with real RPC.
+15. **Flower** (`flwr.dev`) — Pythonic FL framework with real RPC. As
+    of v1.23 (2025-11), introduces **SuperLink + SuperNode** as
+    long-lived processes, dynamic supernode registration, and
+    per-run virtualenv isolation. Plus **FlowerTune** (2025-06): an
+    LLM-fine-tuning federated leaderboard across NLP / finance /
+    medical / coding.
 16. **NVIDIA FLARE** — Enterprise FL platform; SCAFFOLD and FedProx
-    implementations.
+    implementations. As of 2025, integrated with Meta **ExecuTorch**
+    for on-device training (cross-device), and ships **Confidential
+    Federated AI** that runs aggregation inside attested GPU TEEs.
 17. **FedML** — Research-oriented; supports cross-silo and cross-
     device modes.
+18. **Google Federated Computing Platform** (open-sourced at
+    `google-parfait/federated-compute`) — production cross-device
+    stack behind Gboard / Android. TensorFlow Federated computations
+    compiled to Android artifacts and scheduled via
+    `FederatedComputeScheduler`.
+19. **OpenFL** (Intel, now Linux Foundation) — TaskRunner with mTLS +
+    Intel SGX / TDX confidential computing; Workflow API supports
+    non-traditional patterns including vertical FL with private set
+    intersection.
+
+---
+
+## Confidential computing and verifiable inference (2024–2026)
+
+The privacy story for production federated systems and on-prem LLM
+deployment now extends well beyond DP and SecAgg.
+
+### Apple Private Cloud Compute (2024)
+
+- **Apple Security Engineering and Architecture (2024)**, *Private
+  Cloud Compute: A new frontier for AI privacy in the cloud.* —
+  Custom Apple silicon, append-only transparency log of binary
+  measurements, third-party-verifiable attestation, no remote shell,
+  ephemeral storage keys. Apple-controlled supply chain is the
+  argument for why generic TEE (SGX / SEV) cannot match this; in
+  sovereign-AI contexts, this is also Apple's structural disadvantage
+  versus on-prem deployments.
+
+### NVIDIA confidential GPUs
+
+- **NVIDIA (2023)**, *Confidential Computing on H100 GPUs* (whitepaper).
+  Hardware root-of-trust, encrypted GPU memory, performance counters
+  disabled, SPDM channel to CPU TEE (AMD SEV-SNP / Intel TDX).
+- **Liu et al. (2024)**, arXiv:2409.03992 — measured H100 / H200
+  confidential-mode overhead on LLM inference. **70B model overhead
+  approaches zero**; short-prompt TTFT pays 19–26% due to PCIe
+  bounce-buffer encryption.
+- **NVIDIA Blackwell B200** — first TEE-I/O capable GPU; NVLink
+  traffic encrypted in-band, removing bounce-buffer overhead.
+
+### TEE attacks (2024–2026) — read these to understand the threat
+ceiling
+
+- **TEE.Fail (2025-10)** — sub-$1k DDR5 bus interposer extracts
+  attestation keys from SGX / TDX / SEV-SNP simultaneously.
+- **Battering RAM (2025-10)** — $50 DDR4 interposer breaks SGX and
+  SEV-SNP.
+- **Heracles (CCS 2025)** — chosen-plaintext attack on SEV-SNP via
+  AES-XEX ciphertext side-channel.
+- **GPUBreach (2026-04)** — GPU rowhammer corrupts GPU page tables,
+  chains to NVIDIA driver bug for full host compromise. IOMMU does
+  not stop it.
+
+Conclusion: TEE is necessary but not sufficient for sovereign-AI
+deployment. Physical security and ephemeral key rotation must
+accompany hardware TEE.
+
+### zkML and verifiable inference (current state)
+
+- **Lagrange DeepProve-1 (2025-08)** — first zk-proof for full GPT-2
+  inference; 54×–158× faster than EZKL, extends to Gemma3.
+- **Sun et al. (NeurIPS 2024)** — **zkLLM**: 13B-parameter zk-proof in
+  ~15 minutes, <200 KB proof size.
+- **zkPyTorch (2025-03)** — direct PyTorch → ZK circuit compilation;
+  VGG-16 in 2.2 s, but Llama-3 still ~150 s per token.
+- **EZKL** — strongest on tabular ML; transformer LLM not yet
+  supported.
+
+Practical takeaway for 2026 sovereign-AI deployment: zkML is **viable
+for offline audit / spot-checking**, not for inline LLM serving.
+
+### FHE on GPU
+
+- **Zama Concrete-ML 1.9 (2025-04)** — TFHE-rs with GPU acceleration
+  ~30× over CPU; encrypted LoRA fine-tuning supported.
+- **EncryptedLLM (ICML 2025)** — GPT-2 forward pass ~200× over CPU
+  baseline.
+- **HEngine (ACM TACO 2025)** — Microsoft SEAL homomorphic
+  multiplication ~218× over CPU; warp-shuffle NTT optimization.
+
+Practical takeaway: FHE LLM is still minutes-per-token for 7B
+models; production niche is restricted to encrypted embedding lookup
+or small classifiers.
+
+---
+
+## Sovereign / private LLM deployment landscape (2025–2026)
+
+Useful both as interview context and as the broader thesis behind why
+this lab exists.
+
+- **Apple PCC (2024)** — consumer-side privacy benchmark.
+- **Naver HyperCLOVA X (2026-01)** — first central-bank sovereign AI
+  (Bank of Korea); fully on-prem.
+- **Mistral (EU)** — €1.7B Series B (2025-09); deep public-sector
+  alignment in France, Germany, Luxembourg.
+- **Sakana AI (Japan)** — $135M Series B at $2.65B (2025-11), MUFG /
+  Khosla / Lux / **In-Q-Tel** investors.
+- **Taiwan AI Labs FedGPT AgentTeam (2025-06)** — on-prem deployment
+  on a single NVIDIA H200; Taiwan-cognition benchmark 81.4 versus
+  38–44 for general-purpose models.
+- **Phison aiDAPTIV+ (2025)** — SSD-tier VRAM extension; Llama 3.1
+  405B fine-tune on 2 GPUs at the SC25 demo.
+- **DeepSeek V3 / R1 / V4 (2025)** — open-weight + Huawei Ascend
+  stack; the open-source rebuttal to closed sovereign AI.
+
+---
+
+## Suggested reading order
 
 ---
 

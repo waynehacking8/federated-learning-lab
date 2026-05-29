@@ -186,3 +186,86 @@ documented earlier as the reason the label_skew sweep was added.
 Same reasoning as the sibling `iot-pdm-pipeline` repo: forcing the
 rationale into writing reduces the chance of building something that
 sounds defensible in conversation but isn't actually defensible.
+
+---
+
+## D9. Why prioritize cross-silo defaults over cross-device?
+
+**Decision:** Pick defaults (μ ranges, SCAFFOLD use, stateful
+control variates) that are tuned for cross-silo deployment first;
+cross-device behavior is documented but not optimized.
+
+**Why:**
+- The target deployment story for this prototype is **medical and
+  financial federations** — hospital and bank consortia. Both are
+  archetypal cross-silo: small number of clients (5–50), high
+  uptime, strong compute, persistent state allowed.
+- The cross-silo / cross-device split changes which algorithm is
+  rational. SCAFFOLD's per-client control variate `c_k` is
+  practical when clients are always reachable; on a phone
+  population with 5% per-round participation, `c_k` goes stale
+  faster than it can be refreshed. The notes' three-way table
+  (§10.1.4) bakes this in.
+- FedProx's μ range is also topology-dependent: 0.001–0.01 for
+  cross-silo (stable clients can tolerate looser anchoring), 0.01–0.1
+  for cross-device (stronger anchor needed to make partial-work
+  returns safe). The defaults in `docs/algorithms.md` §3 are the
+  cross-silo ones.
+
+**What's lost:** This repo is not a drop-in study of Gboard-style
+FL. A cross-device chapter would need participation-rate sampling,
+client-state aging, and noisier client populations — all out of
+scope here.
+
+---
+
+## D10. Why add Phases 7–10 (personalized, robust, FedOpt, FedLoRA)?
+
+**Decision:** The original roadmap stopped at Phase 6 (SecAgg).
+After mapping the interview-prep notes against the repo, four
+arguments from the notes had no empirical evidence to point at:
+
+1. **Notes §1.8** argues that "one global model for all clients" is
+   often the wrong objective in heterogeneous deployments. There
+   was no personalized-FL implementation. → **Phase 7 (FedPer).**
+2. **Notes §2.5 and §10.1.7** argue that FL needs both DP and robust
+   aggregation, and that DLG-style attacks make the "we only share
+   gradients" defense insufficient. There was no robust-aggregator
+   code and no DLG demo. → **Phase 8 (Krum/Median/Bulyan + DLG).**
+3. **Notes §1.6** mentions the server-side adaptive-optimizer
+   perspective (Reddi 2020) as a power-up worth knowing.
+   → **Phase 9 (FedAdam).**
+4. **Notes §4.3 and §10.1.5** argue FedLoRA is the natural endgame
+   for federated LLM fine-tuning. The original roadmap had FedLoRA
+   only as a one-line stretch goal. → **Phase 10 (FedIT + FedSA-LoRA).**
+
+**Why these four specifically:**
+- All four can be implemented on the same in-process simulation
+  scaffold without taking on production complexity.
+- Each one is a 2–4-hour implementation against the existing
+  aggregator protocol — no architectural rewrite required.
+- Each one directly closes a "what about X?" follow-up that the
+  interview notes flag as likely.
+
+**What's NOT in:** EPEAgents-style federated multi-agent systems,
+PUMA-style secure inference, and zkML. These are multi-week crypto
+or systems projects; cite them from `docs/references.md` and the
+notes, do not promise an implementation.
+
+---
+
+## D11. Why a separate `docs/interview-map.md`?
+
+**Decision:** Maintain an explicit cross-reference from each
+interview-prep notes section to the file or experiment in this
+repo that demonstrates it.
+
+**Why:** The interview is a verbal exam, not a code review. During
+the conversation you need to be able to say "the empirical answer
+to that is at `fl/algorithms/scaffold.py` plus
+`results/three_way_comparison.png`" within two seconds. The map
+makes that lookup pre-computed instead of improvised.
+
+**What's lost:** A small maintenance cost — when the repo or the
+notes change, the map needs to be re-synced. The map is short by
+design to keep that cost low.

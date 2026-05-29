@@ -287,6 +287,10 @@ Expected metrics on this prototype (single-host GPU, MNIST):
 | FedProx, Dir(α=0.1), μ=0.01 | 50 | ≥ 0.87 | Phase 3 gate |
 | SCAFFOLD, Dir(α=0.1) | 50 | ≥ 0.90 | Phase 4 gate |
 | DP-FedAvg, IID, (C=1, σ=1) | 100 | ≥ 0.90 | Phase 5 gate |
+| FedPer, Dir(α=0.1) — mean per-client acc | 50 | ≥ FedAvg + 3 | Phase 7 gate |
+| Median, IID, n=10, f=2 sign-flip | 50 | ≥ baseline − 5 | Phase 8 gate |
+| FedAdam, Dir(α=0.1) | 50 | rounds-to-target ≤ 0.8 × FedAvg's | Phase 9 gate |
+| FedIT, IID, AG News | 20 | ≥ 0.9 × centralized LoRA | Phase 10 gate |
 
 If your numbers are more than 3 percentage points below these,
 suspect a bug rather than the design.
@@ -301,3 +305,172 @@ suspect a bug rather than the design.
 
 If you see these times triple, the per-sample gradient loop is
 probably running on CPU.
+
+---
+
+## 10. FedPer (personalized FL) — `fl/algorithms/fedper.py`
+
+### Split
+
+Reuse `make_mnist_cnn`. Partition the parameter set into:
+
+- **Shared body** = both `Conv2d` layers + the first `Linear(32*4*4, 64)`
+  (and ReLUs / pools — they have no parameters).
+- **Per-client head** = the final `Linear(64, 10)`.
+
+Names in `state_dict()` should be inspected programmatically — do
+not hard-code parameter names; instead define a helper
+`is_shared(param_name) -> bool` that the aggregator consults.
+
+### Aggregation
+
+```
+shared_t+1 = Σ (n_k / n) · shared_t^k        # FedAvg over body only
+head_t+1^k = head_t^k                        # each client keeps its own
+```
+
+The head never moves through the server. Document this in the
+client's `local_update` docstring.
+
+### Acceptance criteria
+
+- On Dirichlet(α=0.1) with 10 clients, FedPer's **mean per-client
+  test accuracy** (each client evaluated on its own held-out
+  partition) is ≥ 3 percentage points higher than FedAvg's at
+  round 50.
+- The global metric (one classifier head evaluated on the union test
+  set) is allowed to be lower than FedAvg's — that's the point.
+
+---
+
+## 11. Robust aggregators — `fl/algorithms/robust.py`
+
+Drop-in `Aggregator` implementations following the same protocol as
+`fedavg`.
+
+### Coordinate-wise median
+
+```
+w_{t+1}[i] = median_k(w_t^k[i])
+```
+
+Element-wise over flattened parameters.
+
+### Krum / Multi-Krum
+
+For each candidate `w_t^k`, compute the sum of squared distances to
+its `n - f - 2` closest peers. Pick the candidate with the smallest
+score (Krum) or average the top-`m` smallest (Multi-Krum).
+
+### Trimmed mean
+
+Sort each coordinate across clients, drop the top and bottom `β` (e.g.
+`β = f`), average the rest.
+
+### Bulyan (stretch)
+
+Run Multi-Krum to pick a candidate pool of size `≥ 2f + 3`, then
+coordinate-wise trimmed mean over that pool.
+
+### Acceptance criteria
+
+- Define a sign-flip Byzantine client that returns `-w_t^k` instead
+  of `w_t^k` (clipped to reasonable norm to look credible).
+- With `n = 10`, `f = 2`: median and Krum keep IID accuracy within
+  5 points of the no-attack baseline; FedAvg degrades by ≥ 20
+  points.
+- Document the **Liu 2023 caveat**: these aggregators silently
+  degrade under Dir(α=0.1) because honest-client divergence is
+  comparable to attacker divergence.
+
+---
+
+## 12. Deep Leakage from Gradients demo — `privacy/dlg.py`
+
+A pedagogical reproduction, not a research-grade attack.
+
+### Setup
+
+- Single MNIST image `x`, single CNN forward pass, capture gradient
+  `g* = ∇L(model(x), y)`.
+- Initialise dummy `x' ~ N(0, 1)` and dummy `y' ~ uniform softmax`.
+- Iteratively minimise `‖∇L(model(x'), y') - g*‖²` over `(x', y')`.
+
+### Acceptance criteria
+
+- Without DP: `x'` becomes visually recognisable as the original
+  digit within `≤ 500` LBFGS steps. Save a side-by-side figure.
+- With DP-SGD `(C=1.0, σ=1.0)` applied to `g*` before sharing: the
+  reconstruction fails to converge to anything recognisable.
+- Output figure: `results/dlg_with_and_without_dp.png` — two rows,
+  before/after DP.
+
+This demo is the empirical answer to "why FL still needs DP and
+SecAgg even though it only shares gradients".
+
+---
+
+## 13. FedOpt — `fl/algorithms/fedopt.py`
+
+Treat the round's aggregated delta `Δ̄ = Σ (n_k / n)(w_local_k - w_global)`
+as a pseudo-gradient and apply a server-side optimizer.
+
+### FedAdam update
+
+```
+g̃_t = -Δ̄                                   # treat negative average delta as a gradient
+m_t = β1 · m_{t-1} + (1 - β1) · g̃_t
+v_t = β2 · v_{t-1} + (1 - β2) · g̃_t²
+w_{t+1} = w_t - lr_server · m_t / (sqrt(v_t) + τ)
+```
+
+`τ = 1e-3` is the "adaptivity floor" from Reddi et al. 2020 and is
+larger than in standard Adam.
+
+### Implementation notes
+
+- Maintain `(m_t, v_t)` as state on the server, shapes matching the
+  flat parameter vector.
+- Make the optimizer choice (Adam / Yogi / Adagrad) a constructor
+  argument.
+- Acceptance: on Dir(α=0.1) with K=10 clients, E=5, FedAvg + FedAdam
+  reaches the FedAvg target accuracy in ≥ 20% fewer rounds, OR
+  exceeds the final accuracy by ≥ 1 percentage point.
+
+---
+
+## 14. FedLoRA prototype — `fl/algorithms/fedlora.py`
+
+### Base model
+
+A small encoder-only transformer (DistilBERT or similar) loaded
+frozen. LoRA adapters attached to the attention `query` and `value`
+projections at rank `r ∈ {4, 8}`. Use the `peft` library to avoid
+re-implementing LoRA from scratch.
+
+### Federation
+
+Each client owns adapter weights `(A_k, B_k)` per attached layer.
+Only adapters cross the network — the base model is shared but
+never aggregated.
+
+### FedIT (baseline)
+
+Aggregate `A` and `B` with weighted averaging (same recipe as
+FedAvg, restricted to adapter parameters).
+
+### FedSA-LoRA (selective aggregation)
+
+Aggregate `A` only. Each client keeps `B_k` across rounds. The
+server delivers updated `Ā` each round; clients reconstruct their
+local model as `W + B_k Ā`.
+
+### Acceptance criteria
+
+- IID partition: FedIT reaches ≥ 90% of the centralised-LoRA
+  fine-tune accuracy within 20 rounds.
+- Dir(α=0.1) partition: FedSA-LoRA's mean per-client accuracy is ≥
+  FedIT's by ≥ 1 percentage point AND payload-per-round is roughly
+  half (only `A` is shared).
+- Save `results/fedlora_communication_vs_accuracy.png`: x-axis =
+  total bytes communicated, y-axis = mean per-client accuracy.
