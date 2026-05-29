@@ -1,9 +1,10 @@
 """Phase 2.2 + 3.2 ablations.
 
-E-sweep: FedAvg on Dir(0.1) with local_epochs in {1, 5, 10}. More local
-work per round increases client drift under Non-IID, so larger E should
-reach a *lower* plateau (or be less stable) despite doing more compute
-per round -- the "larger E -> more drift" claim (notes section 1.6).
+E-sweep: FedAvg on Dir(0.1) with local_epochs in {1, 5, 10}. Tests the
+"larger E -> more client drift" claim (notes section 1.6). On this MILD
+partition the claim does NOT hold (larger E helps); the drift penalty
+only appears under severe skew. The report records the measured result
+and explains why -- see results/E_SWEEP_REPORT.md.
 
 mu-sweep: FedProx on Dir(0.1) across the cross-silo mu range
 {0.001, 0.01} and the cross-device range {0.05, 0.1}, reporting
@@ -29,6 +30,18 @@ def _rounds_to(history, target):
     return next((h["round"] for h in history if h["test_acc"] >= target), None)
 
 
+def _run_or_load(cfg):
+    """Run the experiment, or load its cached metrics.json if it already
+    exists. Makes the ablation sweep idempotent / resumable after an
+    interrupted run (so we don't recompute completed sub-runs)."""
+    import json
+    mj = Path(cfg.output_dir) / "metrics.json"
+    if mj.exists():
+        print(f"[skip] {cfg.output_dir} already complete", flush=True)
+        return json.loads(mj.read_text())
+    return run_experiment(cfg)
+
+
 def e_sweep():
     runs = {}
     for E in (1, 5, 10):
@@ -38,7 +51,7 @@ def e_sweep():
             output_dir=f"results/ablation_E{E}",
         )
         print(f"\n========== E-sweep: FedAvg Dir(0.1) E={E} ==========", flush=True)
-        summary = run_experiment(cfg)
+        summary = _run_or_load(cfg)
         runs[E] = summary
     return runs
 
@@ -52,7 +65,7 @@ def mu_sweep():
             output_dir=f"results/ablation_mu{mu}",
         )
         print(f"\n========== mu-sweep: FedProx Dir(0.1) mu={mu} ==========", flush=True)
-        runs[mu] = run_experiment(cfg)
+        runs[mu] = _run_or_load(cfg)
     # FedAvg reference (mu=0 equivalent).
     cfg = ExperimentConfig(
         algorithm="fedavg", partition="dirichlet", alpha=0.1, num_clients=10,
@@ -60,7 +73,7 @@ def mu_sweep():
         output_dir="results/ablation_mu_fedavg",
     )
     print("\n========== mu-sweep: FedAvg reference ==========", flush=True)
-    runs["fedavg"] = run_experiment(cfg)
+    runs["fedavg"] = _run_or_load(cfg)
     return runs
 
 
@@ -97,12 +110,19 @@ def main():
         "",
         "## Interpretation",
         "",
-        "More local epochs per round = more client compute, but under Non-IID",
-        "each client's local optimum is further from the global optimum, so",
-        "larger E drives the local models further apart (client drift) before",
-        "each aggregation. The expected signature is a noisier / lower-plateau",
-        "curve for large E despite the extra compute -- exactly the trade-off",
-        "FedProx and SCAFFOLD are designed to mitigate.",
+        "The textbook claim is 'larger E -> more client drift -> lower",
+        "plateau' under Non-IID. On THIS partition (Dir(0.1), K=10) the data",
+        "shows the OPPOSITE: larger E converges faster and slightly higher",
+        "(E=1 -> 0.966, E=5 -> 0.980, E=10 -> 0.982). The reason is that",
+        "Dir(0.1) on 10 fully-participating clients is only mildly Non-IID --",
+        "each client still sees a long tail of every class -- so the extra",
+        "local compute from large E outweighs the small drift it induces.",
+        "The drift penalty dominates only under *severe* skew (e.g.",
+        "label_skew(2), where the unified sweep showed FedAvg plateauing well",
+        "below IID). So the E trade-off is itself partition-severity",
+        "dependent -- the same lesson as the mu-sweep and the SCAFFOLD",
+        "client-count finding: a single mild benchmark hides the effect.",
+        "Reported as measured rather than asserted (CLAUDE.md).",
         "",
     ]
     Path("results/E_SWEEP_REPORT.md").write_text("\n".join(lines))
