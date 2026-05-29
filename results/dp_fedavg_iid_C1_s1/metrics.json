@@ -135,7 +135,8 @@
     }
   ],
   "final_acc": 0.9063,
-  "wall_seconds": 208.4272472858429,
+  "wall_seconds": 241.19667768478394,
   "naive_epsilon": 1425.535680737907,
+  "rdp_epsilon": 1.9930287200717465,
   "total_steps": 3760
 }

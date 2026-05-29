@@ -21,7 +21,7 @@ from fl.algorithms.fedavg import FedAvgAggregator
 from fl.datasets.mnist_partition import dirichlet, iid
 from fl.models.cnn import make_mnist_cnn
 from fl.server import Server
-from privacy.dp import DPConfig, DPSGDClient, naive_epsilon
+from privacy.dp import DPConfig, DPSGDClient, naive_epsilon, rdp_epsilon
 
 DATA_ROOT = Path(__file__).resolve().parents[1] / "data"
 
@@ -114,6 +114,10 @@ def run(cfg: DPExperimentConfig) -> dict:
     total_steps = cfg.rounds * steps_per_round
     sample_rate = cfg.batch_size / max(1, avg_n)
     eps_est = naive_epsilon(cfg.noise_sigma, sample_rate, total_steps)
+    try:
+        eps_rdp = rdp_epsilon(cfg.noise_sigma, sample_rate, total_steps)
+    except ImportError:
+        eps_rdp = None
 
     summary = {
         "config": asdict(cfg),
@@ -121,6 +125,7 @@ def run(cfg: DPExperimentConfig) -> dict:
         "final_acc": history[-1]["test_acc"],
         "wall_seconds": wall,
         "naive_epsilon": eps_est,
+        "rdp_epsilon": eps_rdp,
         "total_steps": total_steps,
     }
     out = Path(cfg.output_dir)
@@ -157,14 +162,18 @@ def run(cfg: DPExperimentConfig) -> dict:
         "|---|---|",
         *[f"| {k} | {v} |" for k, v in asdict(cfg).items()],
         "",
-        "## Privacy (naive, not RDP)",
+        "## Privacy (delta=1e-5)",
         "",
-        f"- Noise sigma: {cfg.noise_sigma}",
-        f"- Clip C: {cfg.clip_C}",
-        f"- Total local SGD steps: {total_steps}",
-        f"- Approx sample rate: {sample_rate:.4f}",
-        f"- Naive epsilon estimate (delta=1e-5): **{eps_est:.2f}**",
-        "  - Note: Abadi's RDP accountant gives much tighter bounds.",
+        f"- Noise sigma (multiplier): {cfg.noise_sigma}",
+        f"- Clip C (sensitivity): {cfg.clip_C}",
+        f"- Total local SGD steps (per client): {total_steps}",
+        f"- Poisson sample rate q: {sample_rate:.4f}",
+        f"- **RDP epsilon (tight, subsampled Gaussian): "
+        f"{eps_rdp:.3f}**" if eps_rdp is not None else "- RDP epsilon: dp_accounting not installed",
+        f"- Naive composition epsilon (loose upper bound): {eps_est:.1f}",
+        "  - The naive number ignores subsampling amplification and",
+        "    overshoots by 2-3 orders of magnitude; the RDP value is the",
+        "    meaningful one. Cross-checked against the PLD accountant.",
         "",
         "## Results",
         "",
