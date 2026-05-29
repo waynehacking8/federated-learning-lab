@@ -136,7 +136,7 @@ SecAgg" as the production upgrade path.
 
 ---
 
-## D9. CNN parameter count is 46,706, not 21,706
+## D12. CNN parameter count is 46,706, not 21,706
 
 **Decision:** Implement the architecture as stated in
 `specifications.md` section 1 (Conv 1->16, Conv 16->32, FC 512->64,
@@ -178,6 +178,16 @@ single small-scale experiment. Client count is a first-order variable,
 not a footnote. This is also why the spec's Dirichlet(0.1) on 10
 clients was too mild to separate the algorithms (all within 1 pp) --
 documented earlier as the reason the label_skew sweep was added.
+
+**Convergence correction (added after the 120-round re-run, see D15):**
+the original K=10 "0.686" was measured at 25 rounds and was badly
+non-converged. Run to 120 rounds, SCAFFOLD K=10 climbs to ~0.83 (best
+0.857) -- nearly level with FedAvg's 0.844. So the dramatic "worst at
+K=10" gap is *mostly a truncation artifact*: at convergence SCAFFOLD is
+roughly tied with FedAvg at K=10 and clearly best at K=100. The
+client-count *direction* (SCAFFOLD improves more with more clients) holds;
+the *magnitude* of the K=10 deficit shrinks from 14pp to ~1-3pp once both
+are run to a plateau. Always check convergence before comparing finals.
 
 ---
 
@@ -269,3 +279,145 @@ makes that lookup pre-computed instead of improvised.
 **What's lost:** A small maintenance cost — when the repo or the
 notes change, the map needs to be re-synced. The map is short by
 design to keep that cost low.
+
+---
+
+## D13. RDP epsilon, not naive composition, for the DP runs
+
+**Decision:** Report the (epsilon, delta) of the DP-FedAvg runs with the
+subsampled-Gaussian RDP accountant (Google `dp_accounting`, the engine
+Opacus wraps), cross-checked against an independent PLD accountant. Keep
+the old naive-composition number only as a foil.
+
+**Why:** The naive strong-composition estimate ignored privacy
+amplification by subsampling (q ~= 0.005) and overshot the true epsilon
+by ~700x (sigma=1: naive 1425 vs RDP 1.99). A number that large is
+indistinguishable from "no privacy" and is actively misleading. The RDP
+value (sigma=1 -> eps 1.99; sigma=5 -> eps 0.24, delta=1e-5) sits at the
+canonical operating point from Abadi 2016 (eps~2 -> ~95% on MNIST,
+centralized) and is the meaningful figure. RDP and PLD agree within ~10%
+(RDP slightly looser, as theory predicts), which is evidence the bound
+is real and not a single-library artefact. The DP-SGD mechanism itself
+was verified: clip-to-C exact, noise std = sigma*C exact.
+
+**What's lost:** nothing -- this strictly improves the privacy claim.
+Full Opacus integration remains a stretch goal (roadmap Phase 11).
+
+---
+
+## D14. FedSA-LoRA's personalization advantage is scale-dependent (not reproduced in the toy regime)
+
+**Observation, not a design choice:** In the Phase 10 setup (frozen
+DistilBERT, 5 clients, ~600 samples each, rank-8 LoRA, 20 rounds),
+FedSA-LoRA does NOT beat FedIT on per-client accuracy -- the
+personalization gate fails. We report this honestly rather than tuning
+until it passes.
+
+**Why FedSA-LoRA struggles here:** LoRA initializes B=0, so the adapter
+is inert until B trains. FedSA-LoRA averages only A across clients while
+each keeps its own B. When the per-client B matrices diverge (which they
+do under label skew, and which is exactly the regime the paper targets),
+the averaged A no longer matches any single client's B -- and since the
+adapter acts through the product B*A, the mismatch degrades the model.
+With little local data and few rounds, B cannot re-align to the freshly
+averaged A. Guo et al. (ICLR 2025) demonstrate the gains on larger
+models, more data, and more rounds.
+
+**What this still demonstrates (correctly):** (a) the FedIT IID gate
+passes -- federated LoRA on adapters reaches the centralized-LoRA
+reference; (b) the A-shared / B-local mechanism is implemented per the
+paper; (c) the adapter payload is correctly halved (FedSA shares ~0.50x
+the adapter bytes of FedIT). The accuracy advantage is the one piece
+that is scale-dependent, and the repo says so.
+
+**Why not just shrink the gate until it passes:** CLAUDE.md section 1 --
+surface tradeoffs, do not hide confusion. A FAIL with a correct
+mechanism and a cited reason is more honest (and more useful in an
+interview) than a PASS manufactured by cherry-picking the seed or metric.
+
+---
+
+## D15. SCAFFOLD K=10 label-skew: report the converged value (120 rounds), not the 25-round snapshot
+
+**Decision:** The earlier SCAFFOLD K=10 label_skew(2) number (0.686 at
+25 rounds) was a non-converged snapshot -- the curve was still rising.
+Re-run to 120 rounds to reach a genuine plateau and report that value.
+
+**Why:** Under extreme few-client skew, SCAFFOLD's control variates take
+many rounds to become useful estimates (they start at zero and each is
+built from a 2-class slice). Truncating at 25 rounds understated its
+converged accuracy. The unified-budget sweep (50 rounds) already showed
+it had climbed to ~0.72; the 120-round run confirms the plateau. The
+client-count finding (D10/SCAFFOLD worse at K=10, best at K=100) still
+holds at convergence -- but the *magnitude* of the K=10 gap shrinks once
+both regimes are run to a plateau, so we report converged values and a
+plateau check (mean |delta| over last 5 rounds < 0.5pp) for every run.
+
+**What's lost:** more GPU time per run. Worth it: a truncated number that
+ranks an algorithm backwards is exactly the failure mode D10 warns about.
+
+---
+
+## D16. FedPer's gain is invisible on MNIST per-client metrics (report it honestly)
+
+**Observation:** On MNIST, FedPer's per-client accuracy ties FedAvg
+(~0.99 both) on Dir(0.1) AND on label_skew(3) -- the +3pp gate fails on
+both -- because the per-client test slice is dominated by a few classes
+and is trivially classified by any reasonable model. FedPer's global
+(union) accuracy collapses (0.39 vs FedAvg 0.98), which proves the head
+specialized; the metric simply has no headroom to reward it.
+
+**Why we do not chase a PASS:** the honest fix would be a harder dataset
+(CIFAR/FEMNIST) where per-client slices are non-trivial, which is a
+roadmap item (D2), not a tuning knob. Manufacturing a PASS by shrinking
+the gate or cherry-picking clients would misrepresent the result.
+
+**What still stands:** the FedPer mechanism (shared body, per-client head,
+body-only aggregation) is implemented and unit-tested; the
+global-collapse / per-client-stable split is exactly the personalization
+signature. The gain magnitude is dataset-dependent and reported as such.
+
+---
+
+## D17. Byzantine attack strength must be calibrated, or the defense looks unnecessary
+
+**Observation:** A pure sign-flip (reflect the honest update through the
+broadcast point, scale 1) barely dented FedAvg (-0.5pp) because the
+honest update after 2 local epochs is tiny, so its reflection is tiny
+too. With that weak attack, FedAvg "passed" and the robust aggregators
+looked pointless.
+
+**Decision:** Use the standard amplified sign-flip,
+`w_byz = w_global - scale * (w_local - w_global)` with scale=10, which is
+the attack strength robust-aggregation papers actually evaluate against.
+Under it FedAvg collapses to ~0.10 (-89pp) while coordinate-median stays
+at 0.989 (-0.2pp) -- the intended contrast.
+
+**Lesson:** a robustness result is only meaningful if the attack is
+strong enough to break the undefended baseline. Always verify the
+baseline degrades before claiming the defense helps.
+
+---
+
+## D18. FedAdam shows no gain on Dir(0.1)/MNIST -- the task is too easy (report honestly)
+
+**Observation:** On Dir(0.1), K=10, server-side FedAdam (server_lr=0.05,
+tau=1e-3) reaches 0.980 vs FedAvg's 0.982 and is *slower* to the 0.95
+target (round 13 vs 7). The gate (fewer rounds OR +1pp) FAILS.
+
+**Why:** Reddi et al. 2020's adaptive server optimizers help when the
+aggregated pseudo-gradient is ill-scaled across coordinates and the
+problem is poorly conditioned. Plain FedAvg already hits 0.95 in 7 rounds
+here -- MNIST + a mild Dirichlet split is too well-behaved for Adam's
+per-coordinate normalization to add anything, and Adam's early
+second-moment warmup costs a few rounds. The mechanism is implemented and
+unit-tested; the benefit is problem-dependent.
+
+**Consistent theme (D14, D16, D18):** FedPer, FedSA-LoRA, and FedAdam all
+fail their gates for the SAME root reason -- MNIST / small AG News with
+mild heterogeneity is too easy to expose the advantage these methods are
+built for. Each is correctly implemented (mechanism verified); the
+benchmark, not the code, is the limiter. The honest fix is a harder
+dataset (CIFAR/FEMNIST) + ill-conditioned objective, which is roadmap
+work, not a tuning knob. We report the FAILs with this reason rather than
+tuning hyperparameters until a PASS appears.

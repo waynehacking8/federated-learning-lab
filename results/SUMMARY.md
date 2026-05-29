@@ -7,6 +7,8 @@ Numbers below come from `results/<name>/metrics.json`.
 
 | Run | Algo | Partition | Rounds | E | K | Final acc | Best acc | r->0.90 | r->0.95 | Wall (s) |
 |---|---|---|---|---|---|---|---|---|---|---|
+| ablation_E1 | fedavg | dirichlet (a=0.1) | 40 | 1 | 10 | 0.9658 | 0.9681 | 8 | 19 | 260.8 |
+| ablation_E5 | fedavg | dirichlet (a=0.1) | 40 | 5 | 10 | 0.9802 | 0.9806 | 4 | 7 | 1159.8 |
 | fedavg_dirichlet_a0.1 | fedavg | dirichlet (a=0.1) | 25 | 5 | 10 | 0.9769 | 0.9782 | 4 | 7 | 930.1 |
 | fedavg_iid | fedavg | iid | 15 | 5 | 10 | 0.9863 | 0.9863 | 1 | 2 | 467.0 |
 | fedavg_labelskew_2 | fedavg | label_skew | 25 | 5 | 10 | 0.8219 | 0.8228 | - | - | 886.6 |
@@ -21,6 +23,8 @@ Numbers below come from `results/<name>/metrics.json`.
 
 ## Plots
 
+- [ablation_E1](ablation_E1/curve.png)
+- [ablation_E5](ablation_E5/curve.png)
 - [dp_fedavg_iid_C1_s1](dp_fedavg_iid_C1_s1/curve.png)
 - [dp_fedavg_iid_C1_s5](dp_fedavg_iid_C1_s5/curve.png)
 - [fedavg_dirichlet_a0.1](fedavg_dirichlet_a0.1/curve.png)
