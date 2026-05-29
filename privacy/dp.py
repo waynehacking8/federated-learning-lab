@@ -56,7 +56,9 @@ def naive_epsilon(noise_scale: float, sample_rate: float, steps: int, delta: flo
     """Naive composition (Abadi 2016 eq. 3) epsilon estimator.
 
     This is a strict upper bound that ignores subsampling amplification
-    and RDP composition. Use Opacus's RDP accountant for tight bounds.
+    and RDP composition, so it overshoots the true epsilon by 2-3 orders
+    of magnitude. Prefer ``rdp_epsilon`` for a meaningful number; this is
+    kept only to show how loose naive composition is.
     """
     # Per-step epsilon under (epsilon, delta)-DP for Gaussian mechanism:
     #   epsilon_step approx sqrt(2 * ln(1.25 / delta)) / sigma
@@ -64,6 +66,34 @@ def naive_epsilon(noise_scale: float, sample_rate: float, steps: int, delta: flo
     # Strong composition for T steps:
     #   epsilon_total approx sqrt(2 * T * ln(1 / delta)) * eps_step
     return math.sqrt(2 * steps * math.log(1 / delta)) * eps_step
+
+
+# Standard RDP orders used by Opacus / TF-Privacy.
+_RDP_ORDERS = [1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64))
+
+
+def rdp_epsilon(
+    noise_multiplier: float, sample_rate: float, steps: int, delta: float = 1e-5
+) -> float:
+    """Tight (epsilon, delta) via the subsampled-Gaussian RDP accountant.
+
+    Uses Google's ``dp_accounting`` (the engine Opacus wraps). The noise
+    multiplier is ``sigma`` (noise std = sigma * C on the C-clipped grad
+    sum), the sensitivity is ``C``, and Poisson subsampling at
+    ``sample_rate`` provides privacy amplification. ``steps`` is the total
+    number of local SGD steps per client.
+
+    Raises ImportError if dp_accounting is unavailable so callers can fall
+    back to ``naive_epsilon`` explicitly rather than silently.
+    """
+    from dp_accounting import dp_event, rdp
+
+    accountant = rdp.RdpAccountant(_RDP_ORDERS)
+    event = dp_event.PoissonSampledDpEvent(
+        sample_rate, dp_event.GaussianDpEvent(noise_multiplier)
+    )
+    accountant.compose(event, steps)
+    return accountant.get_epsilon(delta)
 
 
 @dataclass
@@ -76,9 +106,10 @@ class DPConfig:
 class DPSGDClient:
     """Client wrapper that applies DP-SGD on local updates.
 
-    Uses a per-sample gradient loop (slow but obvious) rather than
-    vmap / functorch. Suitable for the small MNIST CNN; do not use
-    on larger models.
+    Per-sample gradients are vectorised with ``torch.func.vmap`` (see the
+    module docstring); both DP primitives -- per-sample L2 clipping to C
+    and Gaussian noise with std sigma * C -- are applied explicitly in
+    ``local_update``. Sized for the small MNIST CNN.
     """
 
     def __init__(

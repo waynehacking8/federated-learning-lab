@@ -16,21 +16,24 @@
 | seed | 0 |
 | output_dir | results/dp_fedavg_iid_C1_s5 |
 
-## Privacy (naive, not RDP)
+## Privacy (delta=1e-5)
 
-- Noise sigma: 5.0
-- Clip C: 1.0
-- Total local SGD steps: 3760
-- Approx sample rate: 0.0053
-- Naive epsilon estimate (delta=1e-5): **285.11**
-  - Note: Abadi's RDP accountant gives much tighter bounds.
+- Noise sigma (multiplier): 5.0
+- Clip C (sensitivity): 1.0
+- Total local SGD steps (per client): 3760
+- Poisson sample rate q: 0.0053
+- **RDP epsilon (tight, subsampled Gaussian): 0.242**
+- Naive composition epsilon (loose upper bound): 285.1
+  - The naive number ignores subsampling amplification and
+    overshoots by 2-3 orders of magnitude; the RDP value is the
+    meaningful one. Cross-checked against the PLD accountant.
 
 ## Results
 
 - Final accuracy (round 20): **0.7774**
 - Best accuracy: 0.7998
 - Rounds to 0.90: not reached
-- Wall clock: 206.3s
+- Wall clock: 231.2s
 
 ## History
 
