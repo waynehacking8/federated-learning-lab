@@ -133,18 +133,21 @@ simplest credible alternative — partial sharing — and measures whether
 it helps under severe heterogeneity.
 
 ### 7.1 FedPer (partial sharing) — `fl/algorithms/fedper.py`
-- [ ] Split the CNN into shared feature extractor (conv layers) and
-      per-client classifier head (final `Linear(64, 10)`).
-- [ ] Aggregate only the feature-extractor parameters; keep each
-      client's head local across rounds.
-- [ ] Per-client evaluation against its own test partition (the
-      personalized metric) plus a global metric on the union.
+- [x] Split the CNN into shared feature extractor + per-client head
+      (final Linear). Head discovered programmatically via
+      `head_param_names` / `is_shared` (not hard-coded).
+- [x] Aggregate only the body; each client keeps its head across rounds.
+- [x] Per-client evaluation on each client's own slice + global metric.
 
 ### 7.2 Personalization experiment
-- [ ] Compare FedPer vs FedAvg on Dir(α=0.1).
-- [ ] Acceptance: FedPer's per-client mean accuracy ≥ FedAvg's by ≥ 3
-      points at round 50, even if global metric is similar.
-- [ ] Save plot to `results/fedper_vs_fedavg.png`.
+- [x] Compared FedPer vs FedAvg on Dir(α=0.1) and label_skew(3).
+- [~] Acceptance (per-client ≥ FedAvg + 3pp): **FAIL on MNIST** —
+      FedAvg's per-client accuracy already saturates at ~0.995 (each
+      client's own slice is near-trivial), leaving no 3pp headroom. The
+      FedPer global-metric collapse (0.39 vs 0.98) confirms the head
+      specialized — the mechanism works; MNIST is too easy to reward it.
+      Reported honestly (design-decisions D16), not tuned to a PASS.
+- [x] Plots: `results/fedper_vs_fedavg.png`, `results/fedper_labelskew3.png`.
 
 ---
 
@@ -155,25 +158,25 @@ Notes §2.5 and §10.1.7 argue that FL needs both robust aggregation
 inversion). This phase makes both empirical.
 
 ### 8.1 Robust aggregators — `fl/algorithms/robust.py`
-- [ ] Coordinate-wise median.
-- [ ] Krum (and Multi-Krum with `m = n - f`).
-- [ ] Trimmed mean.
-- [ ] (Stretch) Bulyan = Krum candidate pool + trimmed-mean over candidates.
+- [x] Coordinate-wise median.
+- [x] Krum (and Multi-Krum with `m = n - f`).
+- [x] Trimmed mean.
+- [x] Bulyan = Krum candidate pool + trimmed-mean over candidates.
 
 ### 8.2 Poisoning attack
-- [ ] Simulate `f` Byzantine clients that flip gradient sign
-      (sign-flip attack) or scale gradients by a large constant.
-- [ ] Acceptance: median / Krum keep accuracy within 5 points of the
-      no-attack baseline at `f ≤ (n-2)/2`; FedAvg degrades visibly.
-- [ ] Document the Liu et al. (ICML 2023) Non-IID caveat — most
-      classical aggregators silently fail under heterogeneous data.
+- [x] Amplified sign-flip Byzantine clients (`w_global - 10·(w_local -
+      w_global)`); calibrated so the undefended baseline actually breaks
+      (design-decisions D17).
+- [x] **PASS**: at n=10, f=2 (IID), FedAvg collapses to 0.098 (−89pp);
+      median/Krum/Multi-Krum/trimmed/Bulyan all stay within 0.9pp of the
+      0.991 baseline. See `results/robust/REPORT.md`.
+- [x] Documented the Liu et al. (ICML 2023) Non-IID caveat.
 
 ### 8.3 Deep Leakage from Gradients demo
-- [ ] Toy reconstruction of a single MNIST image from its gradient
-      (Zhu et al. 2019).
-- [ ] Re-run with DP-SGD-noised gradients; show that bounded ε breaks
-      the reconstruction.
-- [ ] Save figure to `results/dlg_with_and_without_dp.png`.
+- [x] Single MNIST image reconstructed from its gradient (Zhu 2019).
+- [x] **PASS**: no-DP reconstruction is pixel-perfect (MSE ~0); with
+      DP-SGD noise (C=1, σ=1) it collapses to noise.
+- [x] Figure saved to `results/dlg_with_and_without_dp.png`.
 
 ---
 
@@ -184,19 +187,18 @@ as a single optimizer step — opening Adam / Yogi / Adagrad as drop-in
 replacements for plain weighted averaging.
 
 ### 9.1 FedOpt protocol — `fl/algorithms/fedopt.py`
-- [ ] Treat the average client delta as a "pseudo-gradient".
-- [ ] Apply Adam / Yogi update on the server side with separate
-      server-LR and momentum buffers.
-- [ ] Make the optimizer pluggable — usable on top of FedAvg /
-      FedProx / SCAFFOLD inputs.
+- [x] Average client delta treated as a pseudo-gradient.
+- [x] Server-side Adam / Yogi / Adagrad with τ=1e-3 adaptivity floor
+      (Reddi 2020) and its own momentum buffers.
+- [x] Optimizer pluggable; usable on FedAvg / FedProx client updates.
 
 ### 9.2 Comparison experiment
-- [ ] On Dir(α=0.1), compare FedAvg, FedAvg + server Adam, FedProx +
-      server Adam.
-- [ ] Acceptance: server-side adaptive optimizer improves either
-      convergence speed (rounds-to-target) or final accuracy under
-      heterogeneity.
-- [ ] Save plot to `results/fedopt_comparison.png`.
+- [x] On Dir(α=0.1): FedAvg, FedAdam, FedProx+server-Adam.
+- [~] Acceptance (faster OR +1pp): **FAIL** — FedAdam 0.980 vs FedAvg
+      0.982, slower to target (r13 vs r7). Plain FedAvg already converges
+      in 7 rounds on this well-conditioned task, so adaptive server steps
+      add nothing. Mechanism verified; benefit is problem-dependent
+      (design-decisions D18). `results/fedopt_comparison.png`.
 
 ---
 
@@ -208,27 +210,24 @@ adapters. This phase ports the existing infrastructure to a tiny
 text-classification model so the LoRA leg is reproducible end-to-end.
 
 ### 10.1 FedIT baseline — `fl/algorithms/fedlora.py`
-- [ ] Choose a small language model (DistilBERT-class) and a small
-      text-classification dataset (AG News or SST-2).
-- [ ] Add LoRA adapters on attention projections (rank `r ∈ {4, 8}`).
-- [ ] Federate ONLY the adapter weights `(A, B)` — the base model is
-      frozen and identical across clients.
-- [ ] Acceptance: FedIT reaches ≥ 90% of centralized-LoRA-fine-tune
-      accuracy within 20 rounds on IID partition.
+- [x] Frozen DistilBERT + LoRA (rank 8) on q/v attention; AG News.
+- [x] Federate only adapter weights (+ task head); base model frozen.
+- [x] **PASS**: FedIT IID reaches 0.8985, ≥ 90% of the centralized-LoRA
+      reference (0.887), within 20 rounds. `results/fedlora/REPORT.md`.
 
 ### 10.2 FedSA-LoRA (selective aggregation)
-- [ ] Share only the `A` matrix; keep `B` local.
-- [ ] Compare communication (FedIT vs FedSA-LoRA) and per-client
-      personalization on a Dirichlet-α partition.
-- [ ] Demonstrates the notes §10.1.5 "A learns common knowledge,
-      B learns client-specific" insight empirically.
-- [ ] Save plot to `results/fedlora_communication_vs_accuracy.png`.
+- [x] Share only `A` (+ keep `B` and head local).
+- [x] Adapter payload correctly halved (FedSA 0.50× FedIT).
+- [~] Per-client personalization gate: **FAIL** in this toy regime
+      (zero-init B + little data + few rounds → averaged-A/local-B
+      coupling instability). Mechanism + payload verified; the accuracy
+      advantage is scale-dependent (design-decisions D14). Plot:
+      `results/fedlora_communication_vs_accuracy.png`.
 
 ### 10.3 (Stretch) FlexLoRA — heterogeneous rank
-- [ ] Different clients train different ranks `r_k`.
-- [ ] Server-side aggregation: reconstruct each client's `B_k A_k` to
-      full-size delta, average, SVD back to per-client target rank.
-- [ ] Only worth implementing if 10.2 produces clean baselines.
+- [ ] Not implemented — 10.2 did not produce a clean FedSA baseline at
+      this scale, so the heterogeneous-rank stretch is deferred (the
+      spec gated it on 10.2 succeeding).
 
 ---
 
@@ -236,9 +235,11 @@ text-classification model so the LoRA leg is reproducible end-to-end.
 
 - [ ] **FedDyn / FedNova**: newer drift-mitigation variants worth
       benchmarking against the trio.
-- [ ] **Opacus integration**: replace the custom DP module with
-      Opacus and report rigorous (ε, δ) bounds using the RDP
-      accountant.
+- [x] **Rigorous (ε, δ) accounting**: done via Google `dp_accounting`'s
+      subsampled-Gaussian RDP accountant, cross-checked against PLD (the
+      same engine Opacus wraps). σ=1 → ε≈1.99, σ=5 → ε≈0.24 at δ=1e-5.
+      See `scripts/dp_accounting_report.py` and design-decisions D13.
+      (Full Opacus *training* integration remains future work.)
 - [ ] **Asynchronous FL**: relax synchronous-round assumption; clients
       submit updates whenever ready.
 - [ ] **Real network deployment**: package server and client as

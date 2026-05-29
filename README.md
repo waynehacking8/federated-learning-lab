@@ -85,13 +85,28 @@ python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 pip install pytest
 
-# Run a single algorithm.
+# Phases 1-6: core algorithms.
 python -m scripts.run_fedavg_mnist  --partition iid       --rounds 15
 python -m scripts.run_fedavg_mnist  --partition dirichlet --alpha 0.1 --rounds 25
 python -m scripts.run_fedprox_mnist --partition dirichlet --alpha 0.1 --mu 0.01 --rounds 25
 python -m scripts.run_scaffold_mnist --partition dirichlet --alpha 0.1 --rounds 25
 python -m scripts.run_dp_fedavg     --partition iid       --rounds 20 --noise-sigma 1.0
 python -m scripts.secagg_demo
+
+# Rigorous (RDP + PLD) epsilon accounting for the DP runs.
+python -m scripts.dp_accounting_report
+
+# Phases 7-10: personalization, robustness, server-optimizer, FedLoRA.
+python -m scripts.run_fedper                      # FedPer (Dir(0.1))
+python -m scripts.run_fedper label_skew 3         # FedPer (harder regime)
+python -m scripts.run_robust                      # Krum/Median/Bulyan vs sign-flip
+python -m scripts.run_dlg                         # gradient-leakage demo, DP breaks it
+python -m scripts.run_fedopt                      # FedAdam server-side optimizer
+python -m scripts.run_fedlora                     # FedIT + FedSA-LoRA (DistilBERT/AG News)
+
+# Ablations + communication-cost analysis.
+python -m scripts.run_ablations                   # E-sweep + mu cross-silo/device
+python -m scripts.comm_cost                       # exact bytes/round per algorithm
 
 # Or run the full phase 1-4 sweep in one go (sequential, ~45 min on a single GPU).
 python -m scripts.run_all
@@ -103,6 +118,8 @@ python -m scripts.make_summary
 Each experiment writes ``results/<name>/{metrics.json, curve.png, REPORT.md}``.
 ``run_all`` additionally produces ``results/three_way_comparison.png`` and
 ``results/THREE_WAY_REPORT.md``; ``make_summary`` produces ``results/SUMMARY.md``.
+Every reported number is cross-checked against the literature in
+``docs/results-validation.md``.
 
 ---
 

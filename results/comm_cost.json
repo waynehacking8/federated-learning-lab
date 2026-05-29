@@ -1,0 +1,12 @@
+{
+  "total_float_params": 46730,
+  "body_params": 46080,
+  "head_params": 650,
+  "bytes_per_round_upload": {
+    "FedAvg": 186920,
+    "FedProx": 186920,
+    "SCAFFOLD": 373840,
+    "FedAdam": 186920,
+    "FedPer": 184320
+  }
+}

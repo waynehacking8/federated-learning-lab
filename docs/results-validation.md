@@ -147,3 +147,109 @@ the demo confirms the server sees only the sum, not individuals.
   for Federated Learning* -- <https://arxiv.org/abs/1910.06378>
 - Abadi et al. 2016, *Deep Learning with Differential Privacy* (DP-SGD).
 - Google `dp_accounting` library (RDP + PLD accountants).
+
+---
+
+## 7. FedPer (Phase 7) -- personalization metric saturates on Dir(0.1)
+
+**Observed:** On Dir(alpha=0.1), K=10, FedPer mean per-client accuracy
+(~0.993) is essentially tied with FedAvg (~0.995) -- the +3pp gate is
+NOT met.
+
+**Why (mechanistic, not a bug):** Under Dir(0.1) each client's local
+test distribution is dominated by 1-2 classes, so even the shared global
+model classifies a client's own slice at ~0.99. There is no headroom for
+a personalized head to add 3pp. FedPer's advantage only appears when the
+single global model is genuinely *compromised* by conflicting clients;
+on an easy per-client metric it cannot show. The FedPer global-metric
+collapse (~0.5 vs FedAvg ~0.976) confirms the head specialized -- the
+mechanism works, the metric just saturates. See `results/fedper_labelskew`
+for the harder label_skew(3) regime where the effect is visible, and
+design-decisions D16.
+
+**Literature anchor:** Arivazhagan et al. 2019 (FedPer) and Collins et
+al. 2021 (FedRep) report personalization gains on sharply heterogeneous
+benchmarks; the gain size is a function of how much the global model is
+forced to compromise, which a near-separable per-client metric hides.
+
+---
+
+## 8. Robust aggregation (Phase 8) -- median/Krum resist sign-flip
+
+**Observed:** Under an amplified sign-flip attack (f=2 of n=10, IID),
+coordinate-median / Krum / Multi-Krum / trimmed-mean / Bulyan stay near
+the no-attack baseline while FedAvg degrades sharply.
+
+**Literature anchor:** Blanchard et al. 2017 (Krum) require n >= 2f+3 for
+the Byzantine-resilience guarantee; here n=10, f=2 -> 2f+3 = 7 <= 10, so
+the guarantee applies. Krum selects the candidate minimizing the sum of
+squared distances to its n-f-2 closest peers -- exactly the
+implementation. Yin et al. 2018 give the median/trimmed-mean breakdown
+analysis.
+
+**Caveat documented:** Liu et al. (ICML 2023) -- under strong Non-IID,
+honest-client divergence approaches attacker divergence and these
+distance-based defenses silently fail. The demo is on IID, where the
+guarantee holds; the caveat is stated in the Phase 8 report.
+
+---
+
+## 9. DLG (Phase 8.3) -- gradient leakage, broken by DP
+
+**Observed:** A single MNIST image is reconstructed near-perfectly from
+its gradient (MSE ~ 0.000); with DP-SGD noise (C=1, sigma=1) on the
+gradient the reconstruction fails (pure noise).
+
+**Literature anchor:** Zhu et al. 2019 (Deep Leakage from Gradients) --
+the gradient-matching attack; uses smooth activations for the LBFGS inner
+loop (we use a sigmoid CNN for the same reason). The DP break is the
+expected consequence of the post-processing + noise: clipping + Gaussian
+noise destroy the per-example signal the attack inverts.
+
+---
+
+## 10. FedAdam (Phase 9) -- server-side adaptive optimizer
+
+**Observed:** On Dir(0.1), treating the averaged client delta as a
+pseudo-gradient and applying server-side Adam (tau=1e-3) changes
+convergence speed / final accuracy versus plain FedAvg.
+
+**Literature anchor:** Reddi et al. 2020 (Adaptive Federated
+Optimization) -- the FedOpt framework; tau=1e-3 is their adaptivity floor
+(larger than vanilla Adam's epsilon). The gate checks the paper's claimed
+benefit (fewer rounds to target OR higher final accuracy) holds on this
+prototype.
+
+---
+
+## 11. FedLoRA (Phase 10) -- FedIT works, FedSA-LoRA is scale-dependent
+
+**Observed:** FedIT (federate all adapters) reaches the centralized-LoRA
+reference on IID AG News (gate PASS). FedSA-LoRA (share only A, keep B
+local) correctly halves the adapter payload but does NOT beat FedIT on
+per-client accuracy in this toy regime (gate FAIL).
+
+**Literature anchor:** Sun et al. 2024 (FedIT) and Guo et al. ICLR 2025
+(FedSA-LoRA: "A learns general knowledge, B learns client-specific;
+share only A"). The mechanism and the payload halving match the paper;
+the accuracy advantage is reported by the paper on larger models / more
+data / more rounds than this prototype runs. See design-decisions D14 for
+why we report the FAIL honestly rather than tuning to a PASS.
+
+---
+
+## Additional sources (Phases 7-10)
+
+- Arivazhagan et al. 2019, *Federated Learning with Personalization
+  Layers* (FedPer).
+- Collins et al. 2021, *Exploiting Shared Representations for
+  Personalized FL* (FedRep).
+- Blanchard et al. 2017, *Machine Learning with Adversaries: Byzantine
+  Tolerant Gradient Descent* (Krum) -- <https://arxiv.org/abs/1703.02757>
+- Yin et al. 2018, *Byzantine-Robust Distributed Learning* (median,
+  trimmed mean).
+- Liu et al. 2023 (ICML), Non-IID caveat for robust aggregation.
+- Zhu et al. 2019, *Deep Leakage from Gradients* (DLG).
+- Reddi et al. 2020, *Adaptive Federated Optimization* (FedAdam/FedYogi).
+- Sun et al. 2024 (FedIT); Guo et al. 2025 (FedSA-LoRA) --
+  <https://arxiv.org/abs/2410.01463>
