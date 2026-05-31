@@ -1,0 +1,142 @@
+{
+  "config": {
+    "partition": "iid",
+    "alpha": 0.1,
+    "num_clients": 10,
+    "rounds": 20,
+    "local_epochs": 1,
+    "local_lr": 0.05,
+    "batch_size": 32,
+    "clip_C": 1.0,
+    "noise_sigma": 5.0,
+    "seed": 0,
+    "output_dir": "results/dp_fedavg_iid_C1_s5"
+  },
+  "history": [
+    {
+      "round": 1,
+      "n_clients": 10,
+      "test_loss": 2.216645477294922,
+      "test_acc": 0.2419
+    },
+    {
+      "round": 2,
+      "n_clients": 10,
+      "test_loss": 2.1572335205078126,
+      "test_acc": 0.2553
+    },
+    {
+      "round": 3,
+      "n_clients": 10,
+      "test_loss": 1.867918341064453,
+      "test_acc": 0.3549
+    },
+    {
+      "round": 4,
+      "n_clients": 10,
+      "test_loss": 1.615828610229492,
+      "test_acc": 0.441
+    },
+    {
+      "round": 5,
+      "n_clients": 10,
+      "test_loss": 1.350917123413086,
+      "test_acc": 0.5819
+    },
+    {
+      "round": 6,
+      "n_clients": 10,
+      "test_loss": 1.2554663665771484,
+      "test_acc": 0.621
+    },
+    {
+      "round": 7,
+      "n_clients": 10,
+      "test_loss": 1.084052328491211,
+      "test_acc": 0.6669
+    },
+    {
+      "round": 8,
+      "n_clients": 10,
+      "test_loss": 0.9894370727539062,
+      "test_acc": 0.7126
+    },
+    {
+      "round": 9,
+      "n_clients": 10,
+      "test_loss": 0.9603052398681641,
+      "test_acc": 0.7412
+    },
+    {
+      "round": 10,
+      "n_clients": 10,
+      "test_loss": 1.0769712341308593,
+      "test_acc": 0.7423
+    },
+    {
+      "round": 11,
+      "n_clients": 10,
+      "test_loss": 1.2945351348876952,
+      "test_acc": 0.7366
+    },
+    {
+      "round": 12,
+      "n_clients": 10,
+      "test_loss": 1.2146148376464845,
+      "test_acc": 0.7383
+    },
+    {
+      "round": 13,
+      "n_clients": 10,
+      "test_loss": 1.0115857528686523,
+      "test_acc": 0.7966
+    },
+    {
+      "round": 14,
+      "n_clients": 10,
+      "test_loss": 1.1987099761962892,
+      "test_acc": 0.7716
+    },
+    {
+      "round": 15,
+      "n_clients": 10,
+      "test_loss": 1.274217431640625,
+      "test_acc": 0.7844
+    },
+    {
+      "round": 16,
+      "n_clients": 10,
+      "test_loss": 1.3160262664794922,
+      "test_acc": 0.7908
+    },
+    {
+      "round": 17,
+      "n_clients": 10,
+      "test_loss": 1.3640486541748047,
+      "test_acc": 0.7804
+    },
+    {
+      "round": 18,
+      "n_clients": 10,
+      "test_loss": 1.3629727905273437,
+      "test_acc": 0.7998
+    },
+    {
+      "round": 19,
+      "n_clients": 10,
+      "test_loss": 1.5108827606201172,
+      "test_acc": 0.7879
+    },
+    {
+      "round": 20,
+      "n_clients": 10,
+      "test_loss": 1.6541398193359376,
+      "test_acc": 0.7774
+    }
+  ],
+  "final_acc": 0.7774,
+  "wall_seconds": 231.17679977416992,
+  "naive_epsilon": 285.10713614758134,
+  "rdp_epsilon": 0.24150003508394757,
+  "total_steps": 3760
+}

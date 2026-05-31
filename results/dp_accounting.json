@@ -1,0 +1,22 @@
+{
+  "s1": {
+    "sigma": 1.0,
+    "rdp_epsilon": 1.9930287200717465,
+    "pld_epsilon": 1.7883059945966668,
+    "analytic_no_subsampling_epsilon": 2179.7782575788606,
+    "naive_epsilon": 1425.535680737907,
+    "q": 0.005333333333333333,
+    "total_steps": 3760,
+    "delta": 1e-05
+  },
+  "s5": {
+    "sigma": 5.0,
+    "rdp_epsilon": 0.24150003508394757,
+    "pld_epsilon": 0.21830044759863151,
+    "analytic_no_subsampling_epsilon": 131.96837010237718,
+    "naive_epsilon": 285.10713614758134,
+    "q": 0.005333333333333333,
+    "total_steps": 3760,
+    "delta": 1e-05
+  }
+}

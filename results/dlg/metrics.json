@@ -1,0 +1,8 @@
+{
+  "mse_no_dp": 3.811718897850369e-06,
+  "mse_dp": 0.4623124301433563,
+  "raw_unclamped_mse_dp": 382769004544.0,
+  "final_match_loss_no_dp": 3.373936863226845e-07,
+  "final_match_loss_dp": 9936.8662109375,
+  "leak_demonstrated": true
+}

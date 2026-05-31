@@ -1,0 +1,24 @@
+{
+  "base": "distilbert-base-uncased",
+  "rank": 8,
+  "rounds": 20,
+  "num_clients": 5,
+  "centralized_acc": 0.904,
+  "fedit_iid_final": 0.8985,
+  "fedit_skew": {
+    "final_global": 0.8745,
+    "per_client_mean": 0.5619306866692844,
+    "payload_bytes_per_round": 14822480,
+    "adapter_payload_bytes_per_round": 2949120
+  },
+  "fedsa_skew": {
+    "final_global": 0.2715,
+    "per_client_mean": 0.4695784410803568,
+    "payload_bytes_per_round": 1474560,
+    "adapter_payload_bytes_per_round": 1474560
+  },
+  "adapter_payload_ratio_fedsa_over_fedit": 0.5,
+  "personalization_delta": -0.09235224558892757,
+  "iid_gate_pass": true,
+  "perso_gate_pass": false
+}
