@@ -208,3 +208,7 @@ See [`docs/references.md`](docs/references.md) for the full reading list
 
 Wei Cheng (Wayne) Chiu · [GitHub](https://github.com/waynehacking8) ·
 M.S. Computer Science, NTUST (April 2026).
+
+---
+
+_Part of my portfolio — [waynehacking8.github.io](https://waynehacking8.github.io/)._
