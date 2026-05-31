@@ -64,17 +64,24 @@ K=10 to best at K=100.
   better global-direction estimate -- the variance-reduction regime the
   algorithm targets.
 
-**Important correction from the convergence re-run (50 rounds, unified
-budget):** the original K=10 SCAFFOLD number (0.686 at 25 rounds) was a
-*non-converged* value -- the curve was still rising. See
-`UNIFIED_LABELSKEW_REPORT.md` for the converged comparison; the
-client-count effect is real but its magnitude shrinks once both regimes
-are run to a plateau. We therefore report SCAFFOLD's value as a
-plateau, not a truncated snapshot.
+**Important correction (convergence re-run + stationary-distribution
+framing, see design-decisions D15):** the original K=10 SCAFFOLD number
+(0.686 at 25 rounds) was *non-converged* AND a single noisy draw.
+SCAFFOLD's global iterates form a Markov chain converging to a
+*stationary distribution* (Karimireddy 2020), so under K=10 severe skew
+the tail oscillates around a mean rather than settling to a point. The
+honest summary is the **tail mean +/- std over the last 10 rounds**:
+SCAFFOLD K=10 (120 rounds) ~0.83 +/- 0.02 (best 0.857), nearly level
+with FedAvg's 0.844 (tail std only ~0.002 -- a true point-plateau). So
+the "worst at K=10" gap is mostly a truncation-plus-noise artefact. A
+server-side global step size eta_g < 1 shrinks the oscillation
+(`results/unified/u_scaffold_K10_etag0.5`).
 
-**Verdict: reasonable.** The literature does not claim SCAFFOLD wins in
-*every* regime; it claims asymptotic robustness. A small-K transient
-disadvantage is consistent with how control variates are built.
+**Verdict: reasonable, now reported as a distribution.** The literature
+does not claim SCAFFOLD wins in *every* regime; it claims asymptotic
+robustness. The K=10 oscillation is the predicted stationary-distribution
+behaviour, not an implementation defect -- and the client-count direction
+(better with more clients: K=100 tail ~0.953) holds firmly.
 
 ---
 

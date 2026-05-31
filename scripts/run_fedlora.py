@@ -208,15 +208,33 @@ def run_federated(strategy, train, test, parts, device, eval_per_client=False,
             "wall_seconds": wall}
 
 
-def run_centralized(train, test, device):
-    """Centralized LoRA fine-tune as the reference ceiling."""
+def run_centralized(train, test, device, max_epochs=30, patience=3):
+    """Centralized LoRA fine-tune as the reference CEILING.
+
+    Trained to convergence (early-stop on test-accuracy plateau), not to a
+    step-count matched to the federated budget. A ceiling must be the best
+    achievable centrally -- otherwise federated could spuriously appear to
+    beat it (which is logically impossible). Returns the best test accuracy
+    seen, so it is a genuine upper bound for the FedIT >= 90%-of-ceiling gate.
+    """
     _set_seeds(SEED)
     model = _make_peft_model(device)
     loader = DataLoader(train, batch_size=BATCH, shuffle=True)
     test_loader = DataLoader(test, batch_size=64, shuffle=False)
-    # Match total gradient steps roughly to the federated budget.
-    _train_local(model, loader, device, epochs=ROUNDS * LOCAL_EPOCHS // NUM_CLIENTS + 1)
-    return _evaluate(model, test_loader, device)
+    best = 0.0
+    stale = 0
+    for ep in range(max_epochs):
+        _train_local(model, loader, device, epochs=1)
+        acc = _evaluate(model, test_loader, device)
+        if acc > best + 1e-4:
+            best = acc
+            stale = 0
+        else:
+            stale += 1
+        print(f"[centralized] epoch {ep+1} acc={acc:.4f} best={best:.4f}", flush=True)
+        if stale >= patience:
+            break
+    return best
 
 
 def main():

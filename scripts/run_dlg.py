@@ -71,9 +71,19 @@ def main() -> None:
         model, g_dp, x.shape, 10, DLGConfig(steps=300, lr=1.0, seed=0)
     )
 
-    # Reconstruction quality: MSE to the true image (lower = better leak).
-    mse_clean = ((x_rec_clean - x) ** 2).mean().item()
-    mse_dp = ((x_rec_dp - x) ** 2).mean().item()
+    # Reconstruction quality, measured in valid pixel space [0,1].
+    # The dummy image is unconstrained during LBFGS, so on DP-noised
+    # gradients the optimiser diverges and raw pixels explode (giving a
+    # meaningless ~1e7 MSE). Clamping to [0,1] before scoring yields a
+    # bounded, interpretable "how recognisable is the reconstruction"
+    # metric in [0,1] -- the figure already renders the clamped image,
+    # so the metric now matches what the eye sees.
+    xc = x.clamp(0, 1)
+    mse_clean = ((x_rec_clean.clamp(0, 1) - xc) ** 2).mean().item()
+    mse_dp = ((x_rec_dp.clamp(0, 1) - xc) ** 2).mean().item()
+    # Also report the raw (unclamped) DP MSE so the divergence is visible
+    # but clearly labelled as a numerical artefact, not the quality metric.
+    raw_mse_dp = ((x_rec_dp - x) ** 2).mean().item()
 
     out = Path("results/dlg"); out.mkdir(parents=True, exist_ok=True)
 
@@ -99,6 +109,7 @@ def main() -> None:
     import json
     (out / "metrics.json").write_text(json.dumps({
         "mse_no_dp": mse_clean, "mse_dp": mse_dp,
+        "raw_unclamped_mse_dp": raw_mse_dp,
         "final_match_loss_no_dp": losses_clean[-1], "final_match_loss_dp": losses_dp[-1],
         "leak_demonstrated": bool(leak_gate),
     }, indent=2))
@@ -108,8 +119,11 @@ def main() -> None:
         "",
         "Single MNIST image reconstructed from its gradient by LBFGS",
         "gradient-matching (Zhu et al. 2019), on a smooth-activation CNN.",
+        "MSE is measured in valid pixel space [0,1] (both images clamped",
+        "before scoring), so it is bounded in [0,1] and matches the rendered",
+        "figure.",
         "",
-        "| Setting | Reconstruction MSE vs original | Gradient-match loss |",
+        "| Setting | Reconstruction MSE (clamped [0,1]) | Gradient-match loss |",
         "|---|---|---|",
         f"| No DP | {mse_clean:.4f} | {losses_clean[-1]:.3e} |",
         f"| DP-SGD (C=1, sigma=1) | {mse_dp:.4f} | {losses_dp[-1]:.3e} |",
@@ -127,6 +141,11 @@ def main() -> None:
         "noise (the same DP-SGD primitives in `privacy/dp.py`) destroy the",
         "fine structure the attack relies on, and the reconstruction fails.",
         "This is the empirical case for pairing FL with DP and/or SecAgg.",
+        "",
+        f"Note: on the DP-noised gradient LBFGS diverges, so the *unclamped*",
+        f"pixels blow up (raw MSE ~ {raw_mse_dp:.1e}); that large number is a",
+        "numerical artefact of the unconstrained optimiser, not the quality",
+        "measure. The clamped-[0,1] MSE above is the meaningful metric.",
         "",
         "Activation note: DLG needs smooth activations (sigmoid) for the",
         "LBFGS gradient-matching to converge; ReLU+MaxPool have ill-defined",

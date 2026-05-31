@@ -26,6 +26,7 @@ def main() -> None:
     p.add_argument("--batch-size", type=int, default=64)
     p.add_argument("--participation-rate", type=float, default=1.0)
     p.add_argument("--mu", type=float, default=0.01)
+    p.add_argument("--global-lr", type=float, default=1.0)
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--output-dir", required=True)
     args = p.parse_args()
@@ -42,6 +43,7 @@ def main() -> None:
         batch_size=args.batch_size,
         participation_rate=args.participation_rate,
         mu=args.mu,
+        global_lr=args.global_lr,
         seed=args.seed,
         output_dir=args.output_dir,
     )

@@ -165,9 +165,17 @@ class ScaffoldAggregator:
     ``_scaffold_round_outputs`` buffer (set by the patched local_update).
     """
 
-    def __init__(self, clients: list) -> None:
+    def __init__(self, clients: list, global_lr: float = 1.0) -> None:
         self.clients = clients
         self.c_global: dict[str, torch.Tensor] | None = None
+        # Global step size eta_g (Karimireddy 2020, Algorithm 1 line 17:
+        # x <- x + eta_g * (1/|S|) sum(y_i - x)). The paper's experiments use
+        # eta_g = 1, which is the default here. eta_g < 1 dampens the
+        # round-to-round oscillation that control variates can induce under
+        # severe skew + many local epochs (the global iterates form a Markov
+        # chain converging to a stationary distribution; a smaller eta_g
+        # shrinks that distribution's variance).
+        self.global_lr = global_lr
 
     def aggregate(
         self,
@@ -214,12 +222,12 @@ class ScaffoldAggregator:
             mean_delta_w[k] /= S
             mean_delta_c[k] /= S
 
-        # w_global <- w_global + mean(delta_w). Non-float keys (BN counters,
-        # etc.) pass through from the broadcast state.
+        # w_global <- w_global + eta_g * mean(delta_w). Non-float keys (BN
+        # counters, etc.) pass through from the broadcast state.
         new_global: dict[str, torch.Tensor] = {}
         for k, v in w_global.items():
             if k in mean_delta_w and v.is_floating_point():
-                new_global[k] = v + mean_delta_w[k]
+                new_global[k] = v + self.global_lr * mean_delta_w[k]
             else:
                 new_global[k] = v.clone()
 

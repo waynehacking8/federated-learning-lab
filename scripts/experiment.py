@@ -44,6 +44,7 @@ class ExperimentConfig:
     batch_size: int = 32
     participation_rate: float = 1.0
     mu: float = 0.01  # FedProx proximal strength
+    global_lr: float = 1.0  # SCAFFOLD server-side step size eta_g
     seed: int = 0
     device: str = "cuda"
     output_dir: Optional[str] = None
@@ -122,7 +123,7 @@ def _make_server(cfg: ExperimentConfig, clients, test_loader, device):
         from fl.algorithms.scaffold import ScaffoldAggregator, attach_scaffold
 
         attach_scaffold(clients)
-        aggregator = ScaffoldAggregator(clients=clients)
+        aggregator = ScaffoldAggregator(clients=clients, global_lr=cfg.global_lr)
     else:
         raise ValueError(f"unknown algorithm: {cfg.algorithm}")
 

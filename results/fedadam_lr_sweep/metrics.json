@@ -1,0 +1,51 @@
+{
+  "fedavg": {
+    "final": 0.9726,
+    "best": 0.9726,
+    "r2t": 7
+  },
+  "results": {
+    "fedavg": {
+      "final": 0.9726,
+      "best": 0.9726,
+      "r2t": 7
+    },
+    "fedadam_0.01": {
+      "final": 0.9372,
+      "best": 0.9518,
+      "r2t": 12,
+      "server_lr": 0.01
+    },
+    "fedadam_0.05": {
+      "final": 0.96,
+      "best": 0.96,
+      "r2t": 14,
+      "server_lr": 0.05
+    },
+    "fedadam_0.1": {
+      "final": 0.9504,
+      "best": 0.9504,
+      "r2t": 15,
+      "server_lr": 0.1
+    },
+    "fedadam_0.3": {
+      "final": 0.1028,
+      "best": 0.3241,
+      "r2t": null,
+      "server_lr": 0.3
+    },
+    "fedadam_1.0": {
+      "final": 0.1009,
+      "best": 0.1009,
+      "r2t": null,
+      "server_lr": 1.0
+    }
+  },
+  "best_fedadam_final": 0.96,
+  "best_fedadam_r2t": 12,
+  "beats_fedavg": false,
+  "faster": false,
+  "higher": false,
+  "rounds": 15,
+  "note": "15-round sweep; FedAvg r2t=7. Every server_lr is slower (r2t>=12) or diverges (>=0.3). Captured from logs/verify_all.log after the runner was killed pre-JSON-write."
+}
