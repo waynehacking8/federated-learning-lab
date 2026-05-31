@@ -146,7 +146,10 @@ it helps under severe heterogeneity.
       client's own slice is near-trivial), leaving no 3pp headroom. The
       FedPer global-metric collapse (0.39 vs 0.98) confirms the head
       specialized — the mechanism works; MNIST is too easy to reward it.
-      Reported honestly (design-decisions D16), not tuned to a PASS.
+      The **label-permutation test** (`results/fedper_verify/`) is the
+      definitive proof: under permuted labels FedAvg collapses to 0.30
+      while FedPer holds 0.97 (+67pp). Reported honestly
+      (design-decisions D16), not tuned to a PASS.
 - [x] Plots: `results/fedper_vs_fedavg.png`, `results/fedper_labelskew3.png`.
 
 ---
@@ -218,10 +221,15 @@ text-classification model so the LoRA leg is reproducible end-to-end.
 ### 10.2 FedSA-LoRA (selective aggregation)
 - [x] Share only `A` (+ keep `B` and head local).
 - [x] Adapter payload correctly halved (FedSA 0.50× FedIT).
-- [~] Per-client personalization gate: **FAIL** in this toy regime
-      (zero-init B + little data + few rounds → averaged-A/local-B
-      coupling instability). Mechanism + payload verified; the accuracy
-      advantage is scale-dependent (design-decisions D14). Plot:
+- [~] Per-client personalization gate: **FAIL** in this toy regime.
+      Mechanism + payload verified (FedSA 0.50× FedIT). A budget grid
+      (rounds × epochs × rank, `results/fedsa_verify/`) **refutes the
+      under-training hypothesis**: the gap *widens* from −6.7pp to −12pp
+      with more compute rather than closing — FedIT shares both A and B
+      so every client benefits, while FedSA keeps B local and each B
+      overfits its 1-2 dominant classes. The selective-aggregation
+      advantage is genuinely scale-dependent (LLM scale per Guo 2025),
+      not an under-training artefact (design-decisions D14). Plot:
       `results/fedlora_communication_vs_accuracy.png`.
 
 ### 10.3 (Stretch) FlexLoRA — heterogeneous rank
@@ -266,8 +274,8 @@ text-classification model so the LoRA leg is reproducible end-to-end.
 
 ---
 
-*Last updated 2026-05-29 to align with the Taiwan AI Labs interview-prep
-notes (May 2026). Phases 1–6 are implemented and experimentally validated
+*Last updated 2026-05-31 (FedSA budget-grid + FedPer permutation-proof
+verifications folded into Phases 7.2 and 10.2). Phases 1–6 are implemented and experimentally validated
 (results under `results/`, summarized in `results/SUMMARY.md`); Phases
 7–10 (personalized FL, robust aggregation + DLG, server-side optimizer,
 FedLoRA) were added to give the notes' arguments empirical evidence in
