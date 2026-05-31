@@ -3,7 +3,7 @@
   "rank": 8,
   "rounds": 20,
   "num_clients": 5,
-  "centralized_acc": 0.887,
+  "centralized_acc": 0.904,
   "fedit_iid_final": 0.8985,
   "fedit_skew": {
     "final_global": 0.8745,

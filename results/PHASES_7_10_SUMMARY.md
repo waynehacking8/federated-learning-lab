@@ -9,9 +9,9 @@ honest PASS/FAIL; FAILs carry a mechanistic reason (see `docs/design-decisions.m
 | 7 FedPer (Dir(0.1)) | per-client >= FedAvg+3pp | FAIL | FedPer 0.9934 vs FedAvg 0.9951 (-0.16pp) |
 | 7 FedPer (label_skew(3)) | per-client >= FedAvg+3pp | FAIL | FedPer 0.9933 vs FedAvg 0.9929 (+0.04pp) |
 | 8 Robust agg | median/Krum within 5pp; FedAvg -20pp | PASS | FedAvg drop +89.3pp, median +0.2pp, krum +0.9pp |
-| 8 DLG | no-DP MSE << DP MSE | PASS | no-DP 0.0000 vs DP 7.67e+07 |
+| 8 DLG | no-DP MSE << DP MSE | PASS | no-DP 0.0000 vs DP 4.62e-01 |
 | 9 FedAdam | fewer rounds OR +1pp | FAIL | FedAvg 0.9816/r7 vs FedAdam 0.9801/r13 |
-| 10 FedIT (IID) | >= 90% centralized | PASS | FedIT 0.8985 vs centralized 0.8870 |
+| 10 FedIT (IID) | >= 90% centralized | PASS | FedIT 0.8985 vs centralized 0.9040 |
 | 10 FedSA-LoRA | per-client +1pp, half payload | FAIL | delta -9.24pp, adapter payload 0.50x |
 
 ## Honest-FAIL notes

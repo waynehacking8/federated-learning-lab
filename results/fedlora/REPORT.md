@@ -2,12 +2,12 @@
 
 Frozen distilbert-base-uncased + LoRA (rank 8) on q/v attention; AG News (4 classes), 5 clients, 20 rounds.
 
-Centralized-LoRA reference accuracy: **0.8870**.
+Centralized-LoRA reference accuracy: **0.9040**.
 
 ## IID gate (FedIT reaches >= 90% of centralized)
 
 - FedIT IID final: 0.8985
-- 90% of centralized: 0.7983
+- 90% of centralized: 0.8136
 - **Gate: PASS**
 
 ## Personalization gate (label-skew): FedSA-LoRA vs FedIT

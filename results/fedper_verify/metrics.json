@@ -1,0 +1,23 @@
+{
+  "setup": "label-permutation per client (conflicting label maps)",
+  "rounds": 8,
+  "num_clients": 5,
+  "fedavg_per_client_mean": 0.3001,
+  "fedper_per_client_mean": 0.9701000000000001,
+  "delta": 0.6700000000000002,
+  "mechanism_proven": true,
+  "fedavg_each": [
+    0.36,
+    0.117,
+    0.2995,
+    0.3475,
+    0.3765
+  ],
+  "fedper_each": [
+    0.9645,
+    0.9615,
+    0.973,
+    0.9785,
+    0.973
+  ]
+}
