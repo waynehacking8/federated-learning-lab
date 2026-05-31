@@ -1,0 +1,30 @@
+{
+  "regime": "feature skew (token-reversal dialects), IID labels",
+  "num_clients": 4,
+  "domains_reversed": [
+    false,
+    true,
+    false,
+    true
+  ],
+  "rounds": 25,
+  "local_epochs": 2,
+  "rank": 8,
+  "fedit_per_client": 0.8862500000000001,
+  "fedsa_per_client": 0.884375,
+  "fedit_each": [
+    0.865,
+    0.9025,
+    0.8875,
+    0.89
+  ],
+  "fedsa_each": [
+    0.88,
+    0.9025,
+    0.885,
+    0.87
+  ],
+  "delta": -0.001875000000000071,
+  "payload_ratio": 0.5,
+  "gate_pass": false
+}

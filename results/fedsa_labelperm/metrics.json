@@ -1,0 +1,51 @@
+{
+  "regime": "per-client label permutation (shared inputs, client-specific labels)",
+  "num_clients": 4,
+  "label_perms": [
+    [
+      0,
+      1,
+      2,
+      3
+    ],
+    [
+      2,
+      3,
+      1,
+      0
+    ],
+    [
+      0,
+      2,
+      1,
+      3
+    ],
+    [
+      3,
+      0,
+      2,
+      1
+    ]
+  ],
+  "rounds": 25,
+  "local_epochs": 2,
+  "rank": 8,
+  "train_per_client": 1500,
+  "fedit_per_client": 0.3895,
+  "fedsa_per_client": 0.8935000000000001,
+  "fedit_each": [
+    0.522,
+    0.166,
+    0.652,
+    0.218
+  ],
+  "fedsa_each": [
+    0.896,
+    0.904,
+    0.896,
+    0.878
+  ],
+  "delta": 0.504,
+  "payload_ratio": 0.5,
+  "gate_pass": true
+}
