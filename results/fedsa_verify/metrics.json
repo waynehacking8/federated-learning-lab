@@ -1,0 +1,53 @@
+{
+  "rows": [
+    {
+      "rounds": 20,
+      "epochs": 1,
+      "rank": 8,
+      "tag": "baseline",
+      "fedsa_pc": 0.565217473217771,
+      "fedit_pc": 0.6324206971268682,
+      "delta": -0.06720322390909717
+    },
+    {
+      "rounds": 40,
+      "epochs": 1,
+      "rank": 8,
+      "tag": "2x_rounds",
+      "fedsa_pc": 0.5659233247432947,
+      "fedit_pc": 0.6864162025275309,
+      "delta": -0.12049287778423623
+    },
+    {
+      "rounds": 20,
+      "epochs": 3,
+      "rank": 8,
+      "tag": "3x_epochs",
+      "fedsa_pc": 0.5656924081189355,
+      "fedit_pc": 0.6529720043093714,
+      "delta": -0.0872795961904359
+    },
+    {
+      "rounds": 20,
+      "epochs": 1,
+      "rank": 16,
+      "tag": "2x_rank",
+      "fedsa_pc": 0.5662464265203544,
+      "fedit_pc": 0.6767836548329088,
+      "delta": -0.11053722831255441
+    },
+    {
+      "rounds": 40,
+      "epochs": 3,
+      "rank": 16,
+      "tag": "all_up",
+      "fedsa_pc": 0.5644280663550713,
+      "fedit_pc": 0.6744688452483092,
+      "delta": -0.11004077889323793
+    }
+  ],
+  "base_delta": -0.06720322390909717,
+  "best_delta": -0.06720322390909717,
+  "gap_closes_with_budget": false,
+  "fedsa_ever_wins": false
+}
