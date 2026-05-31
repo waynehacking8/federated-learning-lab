@@ -180,17 +180,24 @@ def run_federated(strategy, train, test, parts, device, eval_per_client=False,
         if r % 5 == 0 or r == ROUNDS:
             print(f"[{strategy}] round {r:2d} global_acc={global_acc:.4f}", flush=True)
 
-    # Per-client accuracy: evaluate each client's model in its post-training
-    # state (after its last local update this round) on that client's
-    # OWN-distribution test slice. For FedSA the model carries averaged A +
-    # this client's local B; for FedIT it carries the fully shared model.
-    # We do NOT reload shared params here -- the client's last local step is
-    # its deployed personalized model.
+    # Per-client accuracy on the DEPLOYED model: load the final aggregated
+    # shared params into each client, then evaluate on that client's
+    # OWN-distribution test slice. Crucially we DO reload shared params first
+    # so we measure what the client actually deploys after receiving the
+    # aggregation, NOT its post-local-training copy:
+    #   FedSA: shared params = A only, so the client keeps its own B + head
+    #          (its legitimate client-specific personalization).
+    #   FedIT: shared params = A, B AND head, so every client deploys the one
+    #          shared model (no personalization -- which is the point).
+    # Skipping this reload is an eval leak: the client's last local step would
+    # let even a FedIT client silently re-specialize its shared head, hiding
+    # the architectural difference (same bug class fixed in verify_fedper.py).
     per_client = []
     if eval_per_client and per_client_test_parts is not None:
         for cm, tidx in zip(client_models, per_client_test_parts):
             if not tidx:
                 continue
+            _load_shared_state(cm, global_shared)
             cl_loader = DataLoader(Subset(test, tidx), batch_size=64, shuffle=False)
             per_client.append(_evaluate(cm, cl_loader, device))
 
@@ -205,6 +212,7 @@ def run_federated(strategy, train, test, parts, device, eval_per_client=False,
             "payload_bytes_per_round": payload_per_round,
             "adapter_payload_bytes_per_round": adapter_payload,
             "per_client_mean": float(np.mean(per_client)) if per_client else None,
+            "per_client_accs": per_client,
             "wall_seconds": wall}
 
 
