@@ -180,9 +180,9 @@ Then flip checkboxes in `docs/roadmap.md` to `[x]` and commit.
 2. `docs/algorithms.md` — algorithmic intent (FedAvg / FedProx /
    SCAFFOLD derivations) + personalized FL + FedLoRA family.
 3. `docs/design-decisions.md` — "why this, not that" (D1–D11).
-4. `docs/interview-map.md` — cross-reference from Taiwan AI Labs
-   interview-prep notes to repo files; tells you which talking
-   points each phase backs up.
+4. `docs/concept-map.md` — cross-reference from federated-learning
+   concepts and algorithms to repo files; tells you which file or
+   experiment each phase backs up.
 5. `AGENTS.md` — conventions.
 6. Add a new `D{n}` entry rather than silently contradicting
    an existing decision.

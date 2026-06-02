@@ -273,8 +273,7 @@ or small classifiers.
 
 ## Sovereign / private LLM deployment landscape (2025–2026)
 
-Useful both as interview context and as the broader thesis behind why
-this lab exists.
+Useful as the broader thesis behind why this lab exists.
 
 - **Apple PCC (2024)** — consumer-side privacy benchmark.
 - **Naver HyperCLOVA X (2026-01)** — first central-bank sovereign AI

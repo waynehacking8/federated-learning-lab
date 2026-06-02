@@ -77,7 +77,7 @@ solve sovereign-AI for B2G / B2B.
 
 ## 3. Three live disagreements
 
-These are the questions an interviewer will have an opinion on.
+These are the questions a practitioner reviewing this work will have an opinion on.
 
 ### D1. DP versus SMPC — weak-fast versus strong-slow
 
@@ -170,7 +170,7 @@ LLM deployment can be reasoned about.
   sovereign system will be measured against.
 
 **What the GPT moment will probably look like** (best guess,
-defensible in interview):
+empirically supported):
 - A **federated foundation model** trained across regulated silos
   (banks, hospitals, ministries) where retention of utility under
   Non-IID + privacy + Byzantine tolerance is finally
@@ -183,7 +183,7 @@ defensible in interview):
 
 ---
 
-## 6. How this maps to interview talking points
+## 6. Key technical takeaways from this prototype
 
 If a reviewer asks "what does this prototype demonstrate":
 

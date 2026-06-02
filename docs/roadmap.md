@@ -4,8 +4,8 @@ Living document tracking what's done, what's in progress, and what's
 planned.
 
 The list of phases below is also the explicit answer to "which
-interview talking points have empirical evidence in this repo".
-Cross-reference with `docs/interview-map.md`.
+technical claims have empirical evidence in this repo".
+Cross-reference with `docs/concept-map.md`.
 
 ---
 

@@ -232,53 +232,56 @@ scope here.
 ## D10. Why add Phases 7–10 (personalized, robust, FedOpt, FedLoRA)?
 
 **Decision:** The original roadmap stopped at Phase 6 (SecAgg).
-After mapping the interview-prep notes against the repo, four
-arguments from the notes had no empirical evidence to point at:
+On review, four widely-cited arguments in the FL literature had no
+empirical evidence to point at in this repo:
 
-1. **Notes §1.8** argues that "one global model for all clients" is
-   often the wrong objective in heterogeneous deployments. There
-   was no personalized-FL implementation. → **Phase 7 (FedPer).**
-2. **Notes §2.5 and §10.1.7** argue that FL needs both DP and robust
-   aggregation, and that DLG-style attacks make the "we only share
-   gradients" defense insufficient. There was no robust-aggregator
+1. **Personalized FL** (e.g. FedPer) argues that "one global model
+   for all clients" is often the wrong objective in heterogeneous
+   deployments. There was no personalized-FL implementation.
+   → **Phase 7 (FedPer).**
+2. **Privacy + robustness** work argues that FL needs both DP and
+   robust aggregation, and that DLG-style attacks make the "we only
+   share gradients" defense insufficient. There was no robust-aggregator
    code and no DLG demo. → **Phase 8 (Krum/Median/Bulyan + DLG).**
-3. **Notes §1.6** mentions the server-side adaptive-optimizer
-   perspective (Reddi 2020) as a power-up worth knowing.
+3. The **server-side adaptive-optimizer** perspective (Reddi 2020)
+   is a power-up worth implementing.
    → **Phase 9 (FedAdam).**
-4. **Notes §4.3 and §10.1.5** argue FedLoRA is the natural endgame
-   for federated LLM fine-tuning. The original roadmap had FedLoRA
-   only as a one-line stretch goal. → **Phase 10 (FedIT + FedSA-LoRA).**
+4. The **FedLoRA family** (FedSA-LoRA, §4.3 / §10.1.5 of the
+   literature) is the natural endgame for federated LLM fine-tuning.
+   The original roadmap had FedLoRA only as a one-line stretch goal.
+   → **Phase 10 (FedIT + FedSA-LoRA).**
 
 **Why these four specifically:**
 - All four can be implemented on the same in-process simulation
   scaffold without taking on production complexity.
 - Each one is a 2–4-hour implementation against the existing
   aggregator protocol — no architectural rewrite required.
-- Each one directly closes a "what about X?" follow-up that the
-  interview notes flag as likely.
+- Each one directly closes a common "what about X?" follow-up that
+  a reviewer of this work is likely to raise.
 
 **What's NOT in:** EPEAgents-style federated multi-agent systems,
 PUMA-style secure inference, and zkML. These are multi-week crypto
-or systems projects; cite them from `docs/references.md` and the
-notes, do not promise an implementation.
+or systems projects; cite them from `docs/references.md`, do not
+promise an implementation.
 
 ---
 
-## D11. Why a separate `docs/interview-map.md`?
+## D11. Why a separate `docs/concept-map.md`?
 
 **Decision:** Maintain an explicit cross-reference from each
-interview-prep notes section to the file or experiment in this
-repo that demonstrates it.
+federated-learning concept or algorithm to the file or experiment
+in this repo that implements or demonstrates it.
 
-**Why:** The interview is a verbal exam, not a code review. During
-the conversation you need to be able to say "the empirical answer
-to that is at `fl/algorithms/scaffold.py` plus
-`results/three_way_comparison.png`" within two seconds. The map
-makes that lookup pre-computed instead of improvised.
+**Why:** A reader or reviewer exploring the codebase wants to go
+from a concept ("client drift", "selective LoRA aggregation") to
+the concrete evidence — e.g. `fl/algorithms/scaffold.py` plus
+`results/three_way_comparison.png` — without grepping the whole
+tree. The map makes that theory-to-code lookup pre-computed instead
+of improvised.
 
-**What's lost:** A small maintenance cost — when the repo or the
-notes change, the map needs to be re-synced. The map is short by
-design to keep that cost low.
+**What's lost:** A small maintenance cost — when the repo changes,
+the map needs to be re-synced. The map is short by design to keep
+that cost low.
 
 ---
 
@@ -332,8 +335,8 @@ that is scale-dependent, and the repo says so.
 
 **Why not just shrink the gate until it passes:** CLAUDE.md section 1 --
 surface tradeoffs, do not hide confusion. A FAIL with a correct
-mechanism and a cited reason is more honest (and more useful in an
-interview) than a PASS manufactured by cherry-picking the seed or metric.
+mechanism and a cited reason is more honest (and more useful to a
+reviewer) than a PASS manufactured by cherry-picking the seed or metric.
 
 ---
 

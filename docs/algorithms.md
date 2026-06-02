@@ -281,8 +281,8 @@ is how to aggregate `(A, B)` across heterogeneous clients.
 | **SLoRA** | Two-stage sparse-pretraining initialization | Helps under data heterogeneity | Two-stage workflow complexity |
 | **FedSA-LoRA** (ICLR 2025) | Share only `A`; keep `B` local | Lower comms, harder model inversion, free personalization | Newest; less stress-tested |
 
-The FedSA-LoRA insight is the most important one for the Taiwan AI
-Labs interview: `A` encodes shared structure across clients, `B`
+The FedSA-LoRA insight is the most important one in this family:
+`A` encodes shared structure across clients, `B`
 encodes client-specific structure. Treating them asymmetrically is
 the same intuition as FedPer (shared body + private head) — only
 applied inside the adapter rather than across model layers.
