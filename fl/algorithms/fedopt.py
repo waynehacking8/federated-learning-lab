@@ -53,6 +53,7 @@ class FedOptAggregator:
         self.m = {k: torch.zeros_like(self.w[k]) for k in self.float_keys}
         self.v = {k: torch.zeros_like(self.w[k]) for k in self.float_keys}
         self._template = {k: v.clone() for k, v in init_state.items()}
+        self.t = 0
 
     def aggregate(self, client_states: list[dict], sample_sizes: list[int]) -> dict:
         total = float(sum(sample_sizes))
@@ -60,6 +61,7 @@ class FedOptAggregator:
             raise ValueError("sample_sizes sum to zero")
         weights = [n / total for n in sample_sizes]
 
+        self.t += 1
         out: dict[str, torch.Tensor] = {}
         for key in client_states[0].keys():
             first = client_states[0][key]
@@ -82,6 +84,8 @@ class FedOptAggregator:
             else:  # adagrad
                 self.v[key] = self.v[key] + g2
 
-            self.w[key] = self.w[key] - self.server_lr * self.m[key] / (self.v[key].sqrt() + self.tau)
+            m_hat = self.m[key] / (1 - self.beta1 ** self.t)
+            v_hat = self.v[key] / (1 - self.beta2 ** self.t)
+            self.w[key] = self.w[key] - self.server_lr * m_hat / (v_hat.sqrt() + self.tau)
             out[key] = self.w[key].to(first.dtype)
         return out

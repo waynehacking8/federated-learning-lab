@@ -12,7 +12,7 @@ from pathlib import Path
 
 import torch
 
-from privacy.secagg import aggregate_shares, simulate_secagg_round, split_update
+from privacy.secagg import aggregate_shares, split_update
 
 
 def main() -> None:
@@ -30,15 +30,13 @@ def main() -> None:
     for u in updates:
         true_sum = true_sum + u
 
-    recovered = simulate_secagg_round(updates, seed=42)
-
-    # Per-peer aggregated shares -- these are what the server actually sees
-    # if it were eavesdropping on a single peer. They should look like noise.
+    # Build shares with the same seeds simulate_secagg_round uses (seed + k).
     n = len(updates)
     all_shares = [split_update(u, num_peers=n, seed=42 + k) for k, u in enumerate(updates)]
     peer_sums = [
         aggregate_shares([all_shares[k][j] for k in range(n)]) for j in range(n)
     ]
+    recovered = aggregate_shares(peer_sums)
 
     lines = [
         "# SecAgg skeleton demo",

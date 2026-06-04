@@ -132,6 +132,7 @@ class DPSGDClient:
         self.local_lr = local_lr
         self.batch_size = batch_size
         self._loader: Optional[DataLoader] = None
+        self._local_model: Optional[nn.Module] = None
         self.grad_hook = None  # compat with Client protocol
 
     def _make_loader(self) -> DataLoader:
@@ -144,7 +145,7 @@ class DPSGDClient:
         return len(self.local_indices)
 
     def local_update(self, model: nn.Module, global_state: dict) -> tuple[dict, int]:
-        if not hasattr(self, "_local_model") or self._local_model is None:
+        if self._local_model is None:
             from fl.models.cnn import make_mnist_cnn
 
             self._local_model = make_mnist_cnn().to(self.device)

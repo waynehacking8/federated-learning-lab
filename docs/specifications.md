@@ -19,7 +19,7 @@ Linear(64, 10)
 ```
 
 Input: `(batch, 1, 28, 28)`. Output: `(batch, 10)` logits.
-Parameter count: 21,706 (verify with `sum(p.numel() for p in model.parameters())`).
+Parameter count: 46,706 (verify with `sum(p.numel() for p in model.parameters())`).
 
 ### Acceptance criteria
 

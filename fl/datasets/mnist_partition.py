@@ -54,6 +54,15 @@ def label_skew(
         for _ in range(num_clients)
     ]
 
+    # Ensure every class is held by at least one client; if a class has no
+    # holders, pick a random client and replace one of its classes with it.
+    all_assigned = {c for cls_list in client_classes for c in cls_list}
+    for c in classes:
+        if int(c) not in all_assigned:
+            victim = int(rng.integers(num_clients))
+            client_classes[victim][0] = int(c)
+            all_assigned.add(int(c))
+
     # Step 3: for each class, distribute its indices across the clients that hold it.
     holders: dict[int, list[int]] = {int(c): [] for c in classes}
     for client_id, cls_list in enumerate(client_classes):

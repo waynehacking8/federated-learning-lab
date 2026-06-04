@@ -15,7 +15,7 @@ End-of-round (Option II, the simpler form):
     delta_w     = w_local - w_global
 
 Server-side:
-    w_global <- w_global + (1 / N_selected) * sum(delta_w_k)
+    w_global <- w_global + mean(delta_w_k)          # 1/S * sum(delta_w_k)
     c_global <- c_global + (S / N_total) * mean(delta_c_k)
 
 This module wires SCAFFOLD into the existing Server/Client scaffold
@@ -136,7 +136,7 @@ def _patch_client(client) -> None:
                 continue
             w_global_t = global_state[key]
             cl = client._scaffold_c_local.get(key)
-            cg = c_global_cpu.get(key) if c_global_cpu is not None else torch.zeros_like(w_local)
+            cg = c_global_cpu.get(key, torch.zeros_like(w_local)) if c_global_cpu is not None else torch.zeros_like(w_local)
             if cl is None:
                 cl = torch.zeros_like(w_local)
             update = (w_global_t - w_local) / (K * lr)

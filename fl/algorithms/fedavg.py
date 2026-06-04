@@ -54,6 +54,9 @@ def aggregate(client_states: list[dict], sample_sizes: list[int]) -> dict:
                 acc = acc + state[key].to(torch.float32) * w
             out[key] = acc.to(first.dtype)
         else:
-            # Integer tensors (e.g. BN num_batches_tracked) are not averaged.
+            # Integer tensors (e.g. BN num_batches_tracked) are not averaged;
+            # the first client's value is used as a proxy. max() would be more
+            # semantically correct for num_batches_tracked, but all clients run
+            # the same number of local steps so the values are identical in practice.
             out[key] = first.clone()
     return out
