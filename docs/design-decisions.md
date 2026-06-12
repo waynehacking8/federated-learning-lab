@@ -136,7 +136,15 @@ SecAgg" as the production upgrade path.
 
 ---
 
-## D12. CNN parameter count is 46,706, not 21,706
+## D8. Why include this `design-decisions.md`?
+
+Same reasoning as the sibling `iot-pdm-pipeline` repo: forcing the
+rationale into writing reduces the chance of building something that
+sounds defensible in conversation but isn't actually defensible.
+
+---
+
+## D9. CNN parameter count is 46,706, not 21,706
 
 **Decision:** Implement the architecture as stated in
 `specifications.md` section 1 (Conv 1->16, Conv 16->32, FC 512->64,
@@ -191,15 +199,26 @@ are run to a plateau. Always check convergence before comparing finals.
 
 ---
 
-## D8. Why include this `design-decisions.md`?
+## D11. Why a separate `docs/concept-map.md`?
 
-Same reasoning as the sibling `iot-pdm-pipeline` repo: forcing the
-rationale into writing reduces the chance of building something that
-sounds defensible in conversation but isn't actually defensible.
+**Decision:** Maintain an explicit cross-reference from each
+federated-learning concept or algorithm to the file or experiment
+in this repo that implements or demonstrates it.
+
+**Why:** A reader or reviewer exploring the codebase wants to go
+from a concept ("client drift", "selective LoRA aggregation") to
+the concrete evidence — e.g. `fl/algorithms/scaffold.py` plus
+`results/three_way_comparison.png` — without grepping the whole
+tree. The map makes that theory-to-code lookup pre-computed instead
+of improvised.
+
+**What's lost:** A small maintenance cost — when the repo changes,
+the map needs to be re-synced. The map is short by design to keep
+that cost low.
 
 ---
 
-## D9. Why prioritize cross-silo defaults over cross-device?
+## D12. Why prioritize cross-silo defaults over cross-device?
 
 **Decision:** Pick defaults (μ ranges, SCAFFOLD use, stateful
 control variates) that are tuned for cross-silo deployment first;
@@ -226,62 +245,6 @@ cross-device behavior is documented but not optimized.
 FL. A cross-device chapter would need participation-rate sampling,
 client-state aging, and noisier client populations — all out of
 scope here.
-
----
-
-## D10. Why add Phases 7–10 (personalized, robust, FedOpt, FedLoRA)?
-
-**Decision:** The original roadmap stopped at Phase 6 (SecAgg).
-On review, four widely-cited arguments in the FL literature had no
-empirical evidence to point at in this repo:
-
-1. **Personalized FL** (e.g. FedPer) argues that "one global model
-   for all clients" is often the wrong objective in heterogeneous
-   deployments. There was no personalized-FL implementation.
-   → **Phase 7 (FedPer).**
-2. **Privacy + robustness** work argues that FL needs both DP and
-   robust aggregation, and that DLG-style attacks make the "we only
-   share gradients" defense insufficient. There was no robust-aggregator
-   code and no DLG demo. → **Phase 8 (Krum/Median/Bulyan + DLG).**
-3. The **server-side adaptive-optimizer** perspective (Reddi 2020)
-   is a power-up worth implementing.
-   → **Phase 9 (FedAdam).**
-4. The **FedLoRA family** (FedSA-LoRA, §4.3 / §10.1.5 of the
-   literature) is the natural endgame for federated LLM fine-tuning.
-   The original roadmap had FedLoRA only as a one-line stretch goal.
-   → **Phase 10 (FedIT + FedSA-LoRA).**
-
-**Why these four specifically:**
-- All four can be implemented on the same in-process simulation
-  scaffold without taking on production complexity.
-- Each one is a 2–4-hour implementation against the existing
-  aggregator protocol — no architectural rewrite required.
-- Each one directly closes a common "what about X?" follow-up that
-  a reviewer of this work is likely to raise.
-
-**What's NOT in:** EPEAgents-style federated multi-agent systems,
-PUMA-style secure inference, and zkML. These are multi-week crypto
-or systems projects; cite them from `docs/references.md`, do not
-promise an implementation.
-
----
-
-## D11. Why a separate `docs/concept-map.md`?
-
-**Decision:** Maintain an explicit cross-reference from each
-federated-learning concept or algorithm to the file or experiment
-in this repo that implements or demonstrates it.
-
-**Why:** A reader or reviewer exploring the codebase wants to go
-from a concept ("client drift", "selective LoRA aggregation") to
-the concrete evidence — e.g. `fl/algorithms/scaffold.py` plus
-`results/three_way_comparison.png` — without grepping the whole
-tree. The map makes that theory-to-code lookup pre-computed instead
-of improvised.
-
-**What's lost:** A small maintenance cost — when the repo changes,
-the map needs to be re-synced. The map is short by design to keep
-that cost low.
 
 ---
 
@@ -442,3 +405,40 @@ benchmark, not the code, is the limiter. The honest fix is a harder
 dataset (CIFAR/FEMNIST) + ill-conditioned objective, which is roadmap
 work, not a tuning knob. We report the FAILs with this reason rather than
 tuning hyperparameters until a PASS appears.
+## D19. Why add Phases 7–10 (personalized, robust, FedOpt, FedLoRA)?
+
+**Decision:** The original roadmap stopped at Phase 6 (SecAgg).
+On review, four widely-cited arguments in the FL literature had no
+empirical evidence to point at in this repo:
+
+1. **Personalized FL** (e.g. FedPer) argues that "one global model
+   for all clients" is often the wrong objective in heterogeneous
+   deployments. There was no personalized-FL implementation.
+   → **Phase 7 (FedPer).**
+2. **Privacy + robustness** work argues that FL needs both DP and
+   robust aggregation, and that DLG-style attacks make the "we only
+   share gradients" defense insufficient. There was no robust-aggregator
+   code and no DLG demo. → **Phase 8 (Krum/Median/Bulyan + DLG).**
+3. The **server-side adaptive-optimizer** perspective (Reddi 2020)
+   is a power-up worth implementing.
+   → **Phase 9 (FedAdam).**
+4. The **FedLoRA family** (FedSA-LoRA, §4.3 / §10.1.5 of the
+   literature) is the natural endgame for federated LLM fine-tuning.
+   The original roadmap had FedLoRA only as a one-line stretch goal.
+   → **Phase 10 (FedIT + FedSA-LoRA).**
+
+**Why these four specifically:**
+- All four can be implemented on the same in-process simulation
+  scaffold without taking on production complexity.
+- Each one is a 2–4-hour implementation against the existing
+  aggregator protocol — no architectural rewrite required.
+- Each one directly closes a common "what about X?" follow-up that
+  a reviewer of this work is likely to raise.
+
+**What's NOT in:** EPEAgents-style federated multi-agent systems,
+PUMA-style secure inference, and zkML. These are multi-week crypto
+or systems projects; cite them from `docs/references.md`, do not
+promise an implementation.
+
+---
+

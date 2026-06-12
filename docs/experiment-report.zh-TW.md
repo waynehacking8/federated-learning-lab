@@ -3,8 +3,7 @@
 > 本報告以中文完整說明此 repo 所有實驗的設計、結果與「為什麼這些數字合理」。
 > 對應的原始數據在 `results/<name>/metrics.json`,圖表在 `results/*.png`,
 > 文獻交叉驗證在 `docs/results-validation.md`,設計取捨在 `docs/design-decisions.md`。
-> 產出日期:2026-05-29。所有程式碼與結果已提交並推送至
-> `origin/implement-fl-demos`(commit `71d754c`)。
+> 產出日期:2026-05-29(2026-06-12 修訂)。所有程式碼與結果在 `main` 分支。
 
 ---
 
@@ -12,7 +11,7 @@
 
 此 repo 從零實作了聯邦學習的完整演算法譜系(FedAvg / FedProx / SCAFFOLD →
 DP-SGD / SecAgg → 個人化 / 拜占庭強健 / 伺服器端最佳化器 / FedLoRA),
-**33/33 單元測試通過**,每一個數字都經過文獻或獨立工具交叉驗證。
+**50/50 單元測試通過**,每一個數字都經過文獻或獨立工具交叉驗證。
 最重要的誠實結論是:**MNIST + 溫和 Non-IID 太簡單,不足以展現進階方法的優勢**——
 這不是 bug,而是基準資料集的限制,我們如實報告而非調參硬湊出 PASS。
 
@@ -225,7 +224,8 @@ FedProx / Dir(0.1) / E=5:μ ∈ {0.001, 0.01, 0.05, 0.1} 全部 ~0.980、
 
 ## 6. 工程品質與可重現性
 
-- **測試**:33/33 通過(涵蓋 robust/fedper/fedopt/fedlora,以及 SCAFFOLD η_g 與 DP 逐樣本裁剪驗證)。
+- **測試**:50/50 通過(涵蓋 robust/fedper/fedopt/fedlora、SCAFFOLD η_g 與 DP 逐樣本裁剪,
+  以及 FedProx proximal 梯度 vs autograd、SecAgg 還原、DLG DP 後處理、label_skew 分割完整性等回歸測試)。
 - **可重現**:DP 重跑得到位元級相同準確率(seed 紀律有效)。
 - **可恢復**:消融 runner 加了 `_run_or_load()` 冪等守衛,中斷後重跑只補未完成的子實驗。
 - **不影響系統**:全程顯存在上限內,結束後 GPU 回到基線(0% 使用)、無殘留程序。
@@ -253,4 +253,4 @@ Arivazhagan 2019(FedPer)、Guo 2025(FedSA-LoRA)。詳見 `docs/results-validatio
 4. **進階方法**:強健聚合與 DLG 是漂亮的 PASS;FedAdam 在 hard regime
    翻轉為 PASS(bias correction 修復 + 足夠異質性);FedPer/FedSA-LoRA
    的 FAIL 是基準太簡單所致,如實報告而非粉飾。
-5. 全部已提交並推送(`origin/implement-fl-demos`,commit `71d754c`),工作區乾淨。
+5. 全部已提交並推送至 `main`,工作區乾淨。

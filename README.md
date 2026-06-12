@@ -1,14 +1,52 @@
 # Federated Learning Lab
 
+[![tests](https://github.com/waynehacking8/federated-learning-lab/actions/workflows/ci.yml/badge.svg)](https://github.com/waynehacking8/federated-learning-lab/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 > A from-scratch implementation of canonical **federated learning**
 > algorithms — FedAvg, FedProx, SCAFFOLD — with optional differential-
 > privacy and secure-aggregation layers, evaluated on Non-IID
 > partitions of MNIST.
 
+![Three-way comparison: FedAvg vs FedProx vs SCAFFOLD under Non-IID](results/three_way_comparison.png)
+
 Built as a self-study exercise to understand the algorithmic
 machinery behind privacy-preserving distributed training. The repo
 prioritizes **algorithmic correctness and clear measurement of
 Non-IID degradation** over scale or production hardening.
+
+---
+
+## Headline results
+
+All numbers are final test accuracy on MNIST, seed 0, reproduced
+bit-exact on re-run. Full table in
+[`results/SUMMARY.md`](results/SUMMARY.md); every number is
+cross-checked against the literature in
+[`docs/results-validation.md`](docs/results-validation.md).
+
+| Setting | FedAvg | FedProx | SCAFFOLD |
+|---|---|---|---|
+| IID, K=10 | **0.986** | – | – |
+| Dirichlet(α=0.1), K=10 | 0.977 | 0.977 (μ=0.01) | 0.967 |
+| Label-skew(2), K=10 | 0.822 | 0.820 (μ=0.01) | **0.686** ⚠ |
+| Label-skew(2), K=100 | 0.885 | 0.883 (μ=0.1) | **0.918** |
+
+⚠ SCAFFOLD *underperforms* FedAvg at K=10 under extreme label skew —
+its control variates go stale; at K=100 with partial participation
+it wins by +3.3 pp. The crossover is documented in
+[`docs/design-decisions.md`](docs/design-decisions.md).
+
+Privacy & robustness:
+
+- **DP-FedAvg** (σ=1.0, C=1): 0.906 accuracy at **ε ≈ 1.99**
+  (RDP accountant, δ=1e-5); naive composition would claim ε ≈ 1426.
+- **Gradient inversion (DLG)**: reconstructs a training image to
+  MSE 3.8e-6 from plain gradients; per-sample clipping + noise
+  breaks the attack (MSE 0.46).
+- **Byzantine sign-flip** (2 of 10 clients): FedAvg collapses
+  by >20 pp; coordinate-wise median and Krum stay within 5 pp of
+  the clean baseline.
 
 ---
 
@@ -25,7 +63,7 @@ Non-IID degradation** over scale or production hardening.
   with per-sample gradient clipping and Gaussian noise (DP-SGD).
 - A secure-aggregation skeleton (additive-secret-sharing primitive,
   not full SecAgg protocol).
-- Convergence-comparison plots: exploitability vs Non-IID severity
+- Convergence-comparison plots: test accuracy vs Non-IID severity
   across all three algorithms.
 
 ## What this is NOT
@@ -83,7 +121,9 @@ federated-learning-lab/
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-pip install pytest
+
+# Sanity check: 50 unit tests, ~2 s on CPU.
+pytest tests/ -q
 
 # Phases 1-6: core algorithms.
 python -m scripts.run_fedavg_mnist  --partition iid       --rounds 15
@@ -118,8 +158,27 @@ python -m scripts.make_summary
 Each experiment writes ``results/<name>/{metrics.json, curve.png, REPORT.md}``.
 ``run_all`` additionally produces ``results/three_way_comparison.png`` and
 ``results/THREE_WAY_REPORT.md``; ``make_summary`` produces ``results/SUMMARY.md``.
-Every reported number is cross-checked against the literature in
-``docs/results-validation.md``.
+All scripts default to ``--seed 0``; reported numbers are reproduced
+bit-exact on re-run. Every reported number is cross-checked against
+the literature in ``docs/results-validation.md``.
+
+---
+
+## Honest findings
+
+Negative and surprising results are kept, not buried:
+
+- [`docs/SELF_AUDIT.md`](docs/SELF_AUDIT.md) — self-audit of
+  best-acc vs final-acc selection bias across all reported numbers.
+- [`docs/results-validation.md`](docs/results-validation.md) — each
+  headline number cross-checked against published baselines, with
+  mechanistic explanations where they diverge.
+- SCAFFOLD losing to FedAvg at K=10 extreme label skew, FedSA-LoRA's
+  advantage not reproducing in the toy regime, and FedAdam's speed
+  gate failing are all documented as-is in
+  [`docs/design-decisions.md`](docs/design-decisions.md).
+- Full experiment report (zh-TW):
+  [`docs/experiment-report.zh-TW.md`](docs/experiment-report.zh-TW.md).
 
 ---
 
@@ -150,32 +209,21 @@ problem isolates the algorithmic trade-off cleanly. See
 ## Field context (why this matters in 2026)
 
 This prototype implements the **unit test** for the FL stack that sits
-underneath modern on-prem LLM deployments — FedGPT, NVIDIA FLARE,
-Flower, the Google Federated Computing Platform, and the sovereign-AI
-deployments now appearing in Korea (Naver-BOK), Europe (Mistral),
-Japan (Sakana), and Taiwan (Taiwan AI Labs).
-
-Key 2024–2026 papers and systems that build directly on the
+underneath modern privacy-preserving and sovereign-AI deployments —
+NVIDIA FLARE, Flower, the Google Federated Computing Platform, and
+Apple Private Cloud Compute. Recent work that builds directly on the
 algorithms reimplemented here:
 
 - **FedSA-LoRA** (ICLR 2025) — share only the $A$ matrix in LoRA
   fine-tuning; SCAFFOLD-class drift correction continues to matter.
 - **One-shot FL with diffusion** (arXiv 2505.02426) — compresses
-  multi-round FL into one round using synthetic data; outperforms
-  multi-round FedAvg on medical imaging.
-- **Apple Private Cloud Compute** (2024) — the consumer InstructGPT
-  moment for private AI; the template every sovereign-AI deployment
-  is now measured against.
-- **NVIDIA H100 / H200 / B200 confidential computing** — measured 70B
-  inference overhead approaches zero; B200 TEE-I/O removes the last
-  bottleneck.
-- **TEE.Fail / Battering RAM / GPUBreach** (2025–2026) — TEE is
-  necessary but not sufficient; physical security and ephemeral key
-  rotation matter.
+  multi-round FL into one round using synthetic data.
+- **Confidential-computing GPUs** (H100 → B200 TEE-I/O) — make the
+  server side of FL attestable, while 2025–2026 TEE attacks show
+  hardware isolation alone is not sufficient.
 
 See [`docs/field-evolution.md`](docs/field-evolution.md) for the
-narrative, the five core mental models, the three live disagreements
-in the field, and the "GPT-moment" question.
+longer narrative and the open questions in the field.
 
 ---
 
