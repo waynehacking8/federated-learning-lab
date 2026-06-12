@@ -1,48 +1,48 @@
 {
   "fedavg": {
-    "final": 0.9724,
-    "best": 0.9724,
+    "final": 0.9694,
+    "best": 0.9729,
     "r2t": 7
   },
   "results": {
     "fedavg": {
-      "final": 0.9724,
-      "best": 0.9724,
+      "final": 0.9694,
+      "best": 0.9729,
       "r2t": 7
     },
     "fedadam_0.01": {
-      "final": 0.9549,
-      "best": 0.9549,
-      "r2t": 14,
+      "final": 0.9356,
+      "best": 0.9521,
+      "r2t": 12,
       "server_lr": 0.01
     },
     "fedadam_0.05": {
-      "final": 0.9611,
-      "best": 0.9611,
-      "r2t": 13,
+      "final": 0.9499,
+      "best": 0.9499,
+      "r2t": null,
       "server_lr": 0.05
     },
     "fedadam_0.1": {
-      "final": 0.9566,
-      "best": 0.9566,
-      "r2t": 14,
+      "final": 0.9321,
+      "best": 0.9346,
+      "r2t": null,
       "server_lr": 0.1
     },
     "fedadam_0.3": {
-      "final": 0.0892,
-      "best": 0.2129,
+      "final": 0.6133,
+      "best": 0.6133,
       "r2t": null,
       "server_lr": 0.3
     },
     "fedadam_1.0": {
-      "final": 0.0974,
-      "best": 0.1925,
+      "final": 0.1028,
+      "best": 0.256,
       "r2t": null,
       "server_lr": 1.0
     }
   },
-  "best_fedadam_final": 0.9611,
-  "best_fedadam_r2t": 13,
+  "best_fedadam_final": 0.9499,
+  "best_fedadam_r2t": 12,
   "beats_fedavg": false,
   "faster": false,
   "higher": false

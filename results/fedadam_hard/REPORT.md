@@ -5,16 +5,16 @@ adaptive server steps have room to help (Reddi 2020).
 
 | Variant | Final acc | Best acc | Rounds to FedAvg-final |
 |---|---|---|---|
-| FedAvg | 0.8796 | 0.8903 | 20 (self) |
-| FedAdam (lr=0.01) | 0.8394 | 0.8394 | None |
-| FedAdam (lr=0.03) | 0.9007 | 0.9007 | 22 |
-| FedAdam (lr=0.05) | 0.9031 | 0.9031 | 21 |
-| FedAdam (lr=0.1) | 0.7500 | 0.7828 | None |
-| FedYogi (lr=0.01) | 0.8408 | 0.8408 | None |
-| FedYogi (lr=0.03) | 0.8969 | 0.8969 | 23 |
-| FedYogi (lr=0.05) | 0.9024 | 0.9024 | 22 |
+| FedAvg | 0.8866 | 0.8866 | 25 (self) |
+| FedAdam (lr=0.01) | 0.7935 | 0.7975 | None |
+| FedAdam (lr=0.03) | 0.8439 | 0.8439 | None |
+| FedAdam (lr=0.05) | 0.8496 | 0.8496 | None |
+| FedAdam (lr=0.1) | 0.6308 | 0.6308 | None |
+| FedYogi (lr=0.01) | 0.7984 | 0.8015 | None |
+| FedYogi (lr=0.03) | 0.8572 | 0.8572 | None |
+| FedYogi (lr=0.05) | 0.8656 | 0.8656 | None |
 
-**Best adaptive variant: adam_0.05, final=0.9031 (FedAvg 0.8796).**
-**Beats FedAvg (+>=1pp final OR <=0.8x rounds)? YES** (higher=True, faster=False).
+**Best adaptive variant: yogi_0.05, final=0.8656 (FedAvg 0.8866).**
+**Beats FedAvg (+>=1pp final OR <=0.8x rounds)? NO** (higher=False, faster=False).
 
-Conclusion: in a genuinely heterogeneous regime, a server-LR-tuned adaptive optimizer beats plain FedAvg -- the Phase 9 mechanism delivers once the task is hard enough to need it. The earlier Dir(0.1) FAIL was a too-easy-benchmark artefact (FedAvg converged in ~7 rounds), not a limitation of the method.
+Conclusion: even in this harder regime and after a full optimizer/LR sweep, the adaptive variants do not beat FedAvg by the gate margin. Reported as measured.

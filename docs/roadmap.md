@@ -87,7 +87,7 @@ Cross-reference with `docs/concept-map.md`.
 ### 4.2 Comparison experiment
 - [x] Three-way comparison on Dirichlet(0.1) (`three_way_comparison.png`,
       `THREE_WAY_REPORT.md`) and label_skew(2) at K=10 and K=100.
-- [x] Key finding: SCAFFOLD is worst at K=10 (0.686) but best at K=100
+- [x] Key finding: SCAFFOLD is worst at K=10 (0.711) but best at K=100
       (0.918) on label_skew(2) -- ranking is client-count dependent
       (design-decisions D10).
 - [x] Communication cost analysis: bytes per round per algorithm
@@ -197,8 +197,8 @@ replacements for plain weighted averaging.
 
 ### 9.2 Comparison experiment
 - [x] On Dir(α=0.1): FedAvg, FedAdam, FedProx+server-Adam.
-- [~] Acceptance (faster OR +1pp): **FAIL** — FedAdam 0.980 vs FedAvg
-      0.982, slower to target (r13 vs r7). Plain FedAvg already converges
+- [~] Acceptance (faster OR +1pp): **FAIL** — FedAdam 0.981 vs FedAvg
+      0.981, slower to target (r14 vs r7). Plain FedAvg already converges
       in 7 rounds on this well-conditioned task, so adaptive server steps
       add nothing. Mechanism verified; benefit is problem-dependent
       (design-decisions D18). `results/fedopt_comparison.png`.

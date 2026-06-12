@@ -17,14 +17,14 @@ Numbers below come from `results/<name>/metrics.json`.
 | ablation_mu_fedavg | fedavg | dirichlet (a=0.1) | 40 | 5 | 10 | 0.9804 | 0.9806 | 4 | 7 | 1007.5 |
 | fedavg_dirichlet_a0.1 | fedavg | dirichlet (a=0.1) | 25 | 5 | 10 | 0.9769 | 0.9782 | 4 | 7 | 930.1 |
 | fedavg_iid | fedavg | iid | 15 | 5 | 10 | 0.9863 | 0.9863 | 1 | 2 | 467.0 |
-| fedavg_labelskew_2 | fedavg | label_skew | 25 | 5 | 10 | 0.8219 | 0.8228 | - | - | 886.6 |
+| fedavg_labelskew_2 | fedavg | label_skew | 25 | 5 | 10 | 0.9008 | 0.9008 | 25 | - | 666.0 |
 | fedavg_labelskew_2_K100 | fedavg | label_skew | 20 | 5 | 100 | 0.8854 | 0.8854 | - | - | 503.9 |
 | fedprox_dirichlet_a0.1_mu0.01 | fedprox (mu=0.01) | dirichlet (a=0.1) | 25 | 5 | 10 | 0.9766 | 0.9778 | 4 | 7 | 919.3 |
 | fedprox_labelskew_2_K100_mu0.1 | fedprox (mu=0.1) | label_skew | 20 | 5 | 100 | 0.883 | 0.883 | - | - | 516.5 |
-| fedprox_labelskew_2_mu0.01 | fedprox (mu=0.01) | label_skew | 25 | 5 | 10 | 0.8201 | 0.8201 | - | - | 964.6 |
-| fedprox_labelskew_2_mu0.1 | fedprox (mu=0.1) | label_skew | 25 | 5 | 10 | 0.8024 | 0.8024 | - | - | 1023.0 |
+| fedprox_labelskew_2_mu0.01 | fedprox (mu=0.01) | label_skew | 25 | 5 | 10 | 0.901 | 0.901 | 25 | - | 669.7 |
+| fedprox_labelskew_2_mu0.1 | fedprox (mu=0.1) | label_skew | 25 | 5 | 10 | 0.8646 | 0.8646 | - | - | 678.5 |
 | scaffold_dirichlet_a0.1 | scaffold | dirichlet (a=0.1) | 25 | 5 | 10 | 0.9669 | 0.9741 | 4 | 9 | 916.3 |
-| scaffold_labelskew_2 | scaffold | label_skew | 25 | 5 | 10 | 0.6856 | 0.6916 | - | - | 590.1 |
+| scaffold_labelskew_2 | scaffold | label_skew | 25 | 5 | 10 | 0.7112 | 0.7613 | - | - | 675.2 |
 | scaffold_labelskew_2_K100 | scaffold | label_skew | 20 | 5 | 100 | 0.9179 | 0.9179 | 16 | - | 522.9 |
 
 ## Plots

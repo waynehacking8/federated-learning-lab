@@ -29,12 +29,13 @@ cross-checked against the literature in
 |---|---|---|---|
 | IID, K=10 | **0.986** | – | – |
 | Dirichlet(α=0.1), K=10 | 0.977 | 0.977 (μ=0.01) | 0.967 |
-| Label-skew(2), K=10 | 0.822 | 0.820 (μ=0.01) | **0.686** ⚠ |
+| Label-skew(2), K=10 | 0.901 | 0.901 (μ=0.01) | **0.711** ⚠ |
 | Label-skew(2), K=100 | 0.885 | 0.883 (μ=0.1) | **0.918** |
 
 ⚠ SCAFFOLD *underperforms* FedAvg at K=10 under extreme label skew —
-its control variates go stale; at K=100 with partial participation
-it wins by +3.3 pp. The crossover is documented in
+its control variates are noisy estimates from 2-class slices; at
+K=100 it wins by +3.3 pp. The crossover (and why the K=10 number is
+really a stationary distribution, not a point) is documented in
 [`docs/design-decisions.md`](docs/design-decisions.md).
 
 Privacy & robustness:

@@ -3,21 +3,21 @@
 IID MNIST, n=10 clients, f=2 Byzantine (sign-flip),
 30 rounds, seed 0.
 
-No-attack FedAvg baseline: **0.9914**.
+No-attack FedAvg baseline: **0.9915**.
 
 | Aggregator | Final acc (under attack) | Drop vs baseline |
 |---|---|---|
-| fedavg | 0.0980 | +0.8934 |
-| median | 0.9890 | +0.0024 |
-| krum | 0.9827 | +0.0087 |
-| multikrum | 0.9911 | +0.0003 |
-| trimmed | 0.9888 | +0.0026 |
-| bulyan | 0.9890 | +0.0024 |
+| fedavg | 0.0980 | +0.8935 |
+| median | 0.9890 | +0.0025 |
+| krum | 0.9826 | +0.0089 |
+| multikrum | 0.9908 | +0.0007 |
+| trimmed | 0.9883 | +0.0032 |
+| bulyan | 0.9899 | +0.0016 |
 
 **Acceptance gate: PASS**
-- Median within 5pp of baseline: PASS (+0.0024)
-- Krum within 5pp of baseline: PASS (+0.0087)
-- FedAvg degrades >= 20pp: PASS (+0.8934)
+- Median within 5pp of baseline: PASS (+0.0025)
+- Krum within 5pp of baseline: PASS (+0.0089)
+- FedAvg degrades >= 20pp: PASS (+0.8935)
 
 ![robust](../robust_aggregation.png)
 

@@ -6,9 +6,9 @@ plateau. Supersedes the earlier mixed-budget sweep (25 vs 20).
 
 | K | Algorithm | Tail mean+/-std (last 10) | Best acc | r->0.90 | Point-plateaued? | mean|d| last5 |
 |---|---|---|---|---|---|---|
-| 10 | FedAvg | 0.8442 +/- 0.0016 | 0.8463 | - | yes | 0.19pp |
-| 10 | FedProx mu=0.1 | 0.8285 +/- 0.0033 | 0.8339 | - | yes | 0.26pp |
-| 10 | SCAFFOLD | 0.7410 +/- 0.0174 | 0.8210 | - | no | 1.97pp |
+| 10 | FedAvg | 0.9315 +/- 0.0020 | 0.9340 | 25 | yes | 0.16pp |
+| 10 | FedProx mu=0.1 | 0.9121 +/- 0.0062 | 0.9213 | 37 | yes | 0.42pp |
+| 10 | SCAFFOLD | 0.8254 +/- 0.0401 | 0.8975 | - | no | 3.05pp |
 | 100 | FedAvg | 0.9292 +/- 0.0025 | 0.9327 | 26 | yes | 0.07pp |
 | 100 | FedProx mu=0.1 | 0.9282 +/- 0.0023 | 0.9315 | 26 | yes | 0.06pp |
 | 100 | SCAFFOLD | 0.9530 +/- 0.0020 | 0.9562 | 16 | yes | 0.07pp |

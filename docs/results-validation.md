@@ -65,17 +65,19 @@ K=10 to best at K=100.
   algorithm targets.
 
 **Important correction (convergence re-run + stationary-distribution
-framing, see design-decisions D15):** the original K=10 SCAFFOLD number
-(0.686 at 25 rounds) was *non-converged* AND a single noisy draw.
+framing, see design-decisions D15):** the K=10 SCAFFOLD number
+(0.711 at 25 rounds) is *non-converged* AND a single noisy draw.
 SCAFFOLD's global iterates form a Markov chain converging to a
 *stationary distribution* (Karimireddy 2020), so under K=10 severe skew
 the tail oscillates around a mean rather than settling to a point. The
 honest summary is the **tail mean +/- std over the last 10 rounds**:
-SCAFFOLD K=10 (120 rounds) ~0.83 +/- 0.02 (best 0.857), nearly level
-with FedAvg's 0.844 (tail std only ~0.002 -- a true point-plateau). So
-the "worst at K=10" gap is mostly a truncation-plus-noise artefact. A
-server-side global step size eta_g < 1 shrinks the oscillation
-(`results/unified/u_scaffold_K10_etag0.5`).
+SCAFFOLD K=10 (120 rounds) **0.826 +/- 0.051** (best round touches
+0.931) against FedAvg's **0.9315 +/- 0.002** (a true point-plateau).
+The ~10pp deficit is real at convergence; the distribution view fixes
+the *reliability* of the number (final-round 0.766 and best-round 0.931
+are both lottery draws), not the ranking. A server-side global step
+size eta_g < 1 halves the oscillation at similar mean
+(`results/unified/u_scaffold_K10_etag0.5`: 0.835 +/- 0.022).
 
 **Verdict: reasonable, now reported as a distribution.** The literature
 does not claim SCAFFOLD wins in *every* regime; it claims asymptotic
@@ -85,7 +87,7 @@ behaviour, not an implementation defect -- and the client-count direction
 
 ---
 
-## 4. FedProx mu=0.1 hurts at K=10 (0.802 vs FedAvg 0.822)
+## 4. FedProx mu=0.1 hurts at K=10 (0.865 vs FedAvg 0.901)
 
 **Literature anchor (FedProx authors, direct):** "large mu can restrict
 the trajectory of the iterates by constraining the iterates to be closer
@@ -95,7 +97,7 @@ leading to slow convergence."
 
 **Verdict: reasonable, textbook.** Under a fixed round budget, an
 over-strong proximal anchor to a global model that is itself drifting
-slows progress. mu=0.01 (milder) is neutral; mu=0.1 costs ~2pp at K=10
+slows progress. mu=0.01 (milder) is neutral; mu=0.1 costs ~3.6pp at K=10
 and is neutral again at K=100 where the global model is more stable.
 
 ---

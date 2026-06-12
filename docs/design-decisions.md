@@ -166,8 +166,8 @@ introspection.
 ## D10. SCAFFOLD's ranking is client-count dependent (label_skew finding)
 
 **Observation, not a design choice:** On label_skew(2 of 10 classes),
-SCAFFOLD goes from *worst* of the trio at 10 clients (final 0.686 vs
-FedAvg 0.822) to *best* at 100 clients (0.918 vs 0.885). See
+SCAFFOLD goes from *worst* of the trio at 10 clients (final 0.711 vs
+FedAvg 0.901) to *best* at 100 clients (0.918 vs 0.885). See
 `results/LABELSKEW_REPORT.md` and `results/K100_LABELSKEW_REPORT.md`.
 
 **Why this happens:** SCAFFOLD's correction `g - c_local + c_global`
@@ -178,7 +178,7 @@ epochs) every `c_local` is estimated from a tiny biased slice, so their
 mean is noisy and the correction degrades convergence. At 100 clients
 the mean of 100 noisy variates is a far better estimate -- the
 variance-reduction regime SCAFFOLD targets. FedProx mu=0.1 shows a
-milder version: it costs 2 pp at K=10 (over-anchoring to a drifting
+milder version: it costs ~3.6 pp at K=10 (over-anchoring to a drifting
 global model) but is neutral at K=100 (the global model is stable).
 
 **Takeaway for the lab:** never rank drift-correction algorithms from a
@@ -187,15 +187,19 @@ not a footnote. This is also why the spec's Dirichlet(0.1) on 10
 clients was too mild to separate the algorithms (all within 1 pp) --
 documented earlier as the reason the label_skew sweep was added.
 
-**Convergence correction (added after the 120-round re-run, see D15):**
-the original K=10 "0.686" was measured at 25 rounds and was badly
-non-converged. Run to 120 rounds, SCAFFOLD K=10 climbs to ~0.83 (best
-0.857) -- nearly level with FedAvg's 0.844. So the dramatic "worst at
-K=10" gap is *mostly a truncation artifact*: at convergence SCAFFOLD is
-roughly tied with FedAvg at K=10 and clearly best at K=100. The
-client-count *direction* (SCAFFOLD improves more with more clients) holds;
-the *magnitude* of the K=10 deficit shrinks from 14pp to ~1-3pp once both
-are run to a plateau. Always check convergence before comparing finals.
+**Convergence correction (updated after the partition fix + 120-round
+re-run, see D15):** the 25-round K=10 final (0.711) is non-converged AND
+a single noisy draw -- SCAFFOLD's K=10 tail oscillates (stationary
+distribution, see D15), touching 0.93 at its best round while the
+120-round tail mean is **0.826 +/- 0.051** vs FedAvg's point-plateau at
+**0.9315 +/- 0.002** (50 rounds, fixed partition). So at convergence the
+K=10 deficit is ~10pp on the tail mean -- real, not a truncation
+artifact. (An earlier revision claimed the gap "mostly disappears" at
+convergence; that conclusion was contaminated by the label_skew
+partition bug that silently dropped one class and capped FedAvg.)
+The client-count *direction* is unambiguous: at K=100 SCAFFOLD
+point-plateaus at 0.953, clearly best. Always check convergence AND
+report the tail distribution before comparing finals.
 
 ---
 
@@ -305,8 +309,8 @@ reviewer) than a PASS manufactured by cherry-picking the seed or metric.
 
 ## D15. SCAFFOLD K=10 label-skew: it converges to a STATIONARY DISTRIBUTION, not a point -- report tail mean +/- std
 
-**Decision:** The earlier SCAFFOLD K=10 label_skew(2) number (0.686 at
-25 rounds) was a non-converged snapshot -- the curve was still rising.
+**Decision:** The SCAFFOLD K=10 label_skew(2) number (0.711 at
+25 rounds) is a non-converged snapshot -- the curve is still rising.
 Re-running longer is necessary, BUT it does not settle to a single value:
 report the **mean +/- std over the last 10 rounds** instead of a single
 final-round number.
@@ -316,25 +320,31 @@ Karimireddy 2020 proves SCAFFOLD's global iterates and control variates
 form a *Markov chain that converges to a stationary distribution* -- so
 under severe skew + many local epochs (E=5) the tail accuracy oscillates
 around a mean rather than settling to a point. Our data confirms it:
-FedAvg K=10 tail std is ~0.0016 (a true point-plateau) while SCAFFOLD
-K=10 tail std is ~0.017 (10x larger -- the stationary-distribution
-spread). The 50-round "0.716 final" was both non-converged AND a noisy
-single draw; the honest summary is the 120-round tail **mean ~0.83 +/-
-0.02 (best ~0.857)**, nearly level with FedAvg's 0.844. So the dramatic
-"worst at K=10" gap is mostly a truncation-plus-noise artefact.
+FedAvg K=10 tail std is ~0.002 (a true point-plateau) while SCAFFOLD
+K=10 tail std is ~0.04-0.05 (20x larger -- the stationary-distribution
+spread), with single rounds touching 0.93 before swinging back. The
+honest summary is the 120-round tail **mean 0.826 +/- 0.051 (best
+0.931)** against FedAvg's 0.9315 +/- 0.002. Reporting any single round
+would be a lottery draw from that distribution -- the final-round
+"0.766" and the best-round "0.931" are both misleading; the tail mean
+is not. At convergence the K=10 deficit (~10pp) is real; what the
+distribution view corrects is the *reliability* of the number, not its
+direction.
 
 **The standard stabiliser (implemented):** a server-side global step size
 eta_g < 1 (Karimireddy 2020 Algorithm 1: `x <- x + eta_g * mean(delta)`;
 their experiments use eta_g=1, which we keep as the default). eta_g
 shrinks the stationary distribution's variance -- the same role
 FedAvgM/FedAdam server momentum plays. `ScaffoldAggregator(global_lr=...)`
-exposes it; `results/unified/u_scaffold_K10_etag0.5` demonstrates the
-tighter tail at eta_g=0.5.
+exposes it; `results/unified/u_scaffold_K10_etag0.5` demonstrates it:
+eta_g=0.5 halves the tail spread (0.835 +/- 0.022 vs 0.826 +/- 0.051
+at eta_g=1) at a similar mean.
 
 **Client-count finding (D10) still holds:** SCAFFOLD improves more with
 more clients (K=100 tail ~0.953, a true point-plateau because 100
-variates average out the noise). The *direction* is robust; only the
-K=10 deficit magnitude shrinks once reported as a distribution.
+variates average out the noise). The *direction* is robust, and the
+K=10 deficit survives convergence -- the distribution view changes how
+trustworthy the number is, not the ranking.
 
 **What's lost:** more GPU time. Worth it: a truncated, single-draw number
 that ranks an algorithm backwards is exactly the failure mode D10 warns
@@ -386,8 +396,15 @@ baseline degrades before claiming the defense helps.
 ## D18. FedAdam shows no gain on Dir(0.1)/MNIST -- the task is too easy (report honestly)
 
 **Observation:** On Dir(0.1), K=10, server-side FedAdam (server_lr=0.05,
-tau=1e-3) reaches 0.980 vs FedAvg's 0.982 and is *slower* to the 0.95
-target (round 13 vs 7). The gate (fewer rounds OR +1pp) FAILS.
+tau=1e-3) reaches 0.981 vs FedAvg's 0.981 and is *slower* to the 0.95
+target (round 14 vs 7). The gate (fewer rounds OR +1pp) FAILS. The
+harder label_skew(2) regime (`results/fedadam_hard`) FAILS too: the
+best grid point (Yogi, server_lr=0.05) reaches 0.866 vs FedAvg's 0.887.
+An earlier run of that regime appeared to PASS (+2.35pp), but that
+result rested on two since-fixed bugs -- a partition that silently
+dropped one class and a non-paper Adam bias correction -- and did not
+survive the corrections. CIFAR-10 Dir(0.1) likewise FAILS (0.621 vs
+0.682 at 40 rounds).
 
 **Why:** Reddi et al. 2020's adaptive server optimizers help when the
 aggregated pseudo-gradient is ill-scaled across coordinates and the

@@ -3,42 +3,42 @@
   "num_clients": 10,
   "f": 2,
   "seed": 0,
-  "baseline_fedavg_final": 0.9914,
+  "baseline_fedavg_final": 0.9915,
   "under_attack": {
     "fedavg": {
       "final": 0.098,
-      "best": 0.098,
-      "drop_vs_baseline": 0.8934
+      "best": 0.1116,
+      "drop_vs_baseline": 0.8935000000000001
     },
     "median": {
       "final": 0.989,
-      "best": 0.9891,
-      "drop_vs_baseline": 0.0023999999999999577
+      "best": 0.989,
+      "drop_vs_baseline": 0.0025000000000000577
     },
     "krum": {
-      "final": 0.9827,
-      "best": 0.9827,
-      "drop_vs_baseline": 0.00869999999999993
+      "final": 0.9826,
+      "best": 0.9833,
+      "drop_vs_baseline": 0.008900000000000019
     },
     "multikrum": {
-      "final": 0.9911,
+      "final": 0.9908,
       "best": 0.9911,
-      "drop_vs_baseline": 0.00029999999999996696
+      "drop_vs_baseline": 0.0007000000000000339
     },
     "trimmed": {
-      "final": 0.9888,
-      "best": 0.9892,
-      "drop_vs_baseline": 0.0025999999999999357
+      "final": 0.9883,
+      "best": 0.9891,
+      "drop_vs_baseline": 0.0032000000000000917
     },
     "bulyan": {
-      "final": 0.989,
-      "best": 0.9892,
-      "drop_vs_baseline": 0.0023999999999999577
+      "final": 0.9899,
+      "best": 0.9899,
+      "drop_vs_baseline": 0.0016000000000000458
     }
   },
   "median_within_5pp": true,
   "krum_within_5pp": true,
   "fedavg_degrades_20pp": true,
   "gate_pass": true,
-  "wall_seconds": 2280.2962148189545
+  "wall_seconds": 2299.094813108444
 }
