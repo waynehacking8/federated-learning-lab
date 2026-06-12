@@ -54,14 +54,36 @@ def label_skew(
         for _ in range(num_clients)
     ]
 
-    # Ensure every class is held by at least one client; if a class has no
-    # holders, pick a random client and replace one of its classes with it.
-    all_assigned = {c for cls_list in client_classes for c in cls_list}
+    # Ensure every class is held by at least one client.  Naively replacing
+    # a random client's slot can itself orphan the displaced class (and
+    # silently drop all of its samples in step 3), so only displace classes
+    # that have >= 2 holders, and never give a client a duplicate class.
+    if num_clients * classes_per_client < n_classes:
+        raise ValueError(
+            f"cannot cover {n_classes} classes with "
+            f"{num_clients} clients x {classes_per_client} classes each"
+        )
+    holder_counts: dict[int, int] = {int(c): 0 for c in classes}
+    for cls_list in client_classes:
+        for c in cls_list:
+            holder_counts[int(c)] += 1
     for c in classes:
-        if int(c) not in all_assigned:
-            victim = int(rng.integers(num_clients))
-            client_classes[victim][0] = int(c)
-            all_assigned.add(int(c))
+        c = int(c)
+        if holder_counts[c] > 0:
+            continue
+        candidates = [
+            (client_id, slot)
+            for client_id, cls_list in enumerate(client_classes)
+            if c not in (int(x) for x in cls_list)
+            for slot, held in enumerate(cls_list)
+            if holder_counts[int(held)] >= 2
+        ]
+        if not candidates:
+            raise ValueError(f"unable to assign a holder for class {c}")
+        client_id, slot = candidates[int(rng.integers(len(candidates)))]
+        holder_counts[int(client_classes[client_id][slot])] -= 1
+        client_classes[client_id][slot] = c
+        holder_counts[c] = 1
 
     # Step 3: for each class, distribute its indices across the clients that hold it.
     holders: dict[int, list[int]] = {int(c): [] for c in classes}

@@ -36,6 +36,26 @@ def test_label_skew_constraint(synthetic_targets: np.ndarray) -> None:
         assert len(client_classes) <= 2
 
 
+def test_label_skew_no_sample_loss(synthetic_targets: np.ndarray) -> None:
+    """Regression: the class-coverage repair used to orphan a class and
+    silently drop ALL of its samples (e.g. K=10, cpc=2, seed=0 lost an
+    entire class). Every sample must be assigned exactly once and every
+    class must have at least one holder."""
+    for seed in range(20):
+        parts = label_skew(
+            synthetic_targets.tolist(), num_clients=10, classes_per_client=2, seed=seed
+        )
+        flat = sorted(i for sub in parts for i in sub)
+        assert flat == list(range(len(synthetic_targets))), f"seed={seed} lost samples"
+        covered = {int(c) for sub in parts for c in synthetic_targets[sub]}
+        assert covered == set(range(10)), f"seed={seed} dropped classes {set(range(10)) - covered}"
+
+
+def test_label_skew_uncoverable_raises(synthetic_targets: np.ndarray) -> None:
+    with pytest.raises(ValueError):
+        label_skew(synthetic_targets.tolist(), num_clients=2, classes_per_client=2, seed=0)
+
+
 def test_dirichlet_skew_strength(synthetic_targets: np.ndarray) -> None:
     """Lower alpha should produce more skewed client distributions."""
     parts_low = dirichlet(synthetic_targets.tolist(), num_clients=10, alpha=0.1, seed=0)
