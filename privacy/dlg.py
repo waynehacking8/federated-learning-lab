@@ -50,14 +50,19 @@ def _apply_dp(grads, clip_C, sigma, gen):
     """
     if clip_C is None and sigma == 0.0:
         return grads
+    if sigma > 0.0 and clip_C is None:
+        # Noise std is sigma * clip_C (sensitivity-calibrated); without a
+        # clipping bound the noise scale is undefined.  Failing loudly is
+        # better than silently returning the raw gradient.
+        raise ValueError("dp_sigma > 0 requires dp_clip_C (noise std = sigma * clip_C)")
     flat = _flat_grad(grads)
     out = grads
     if clip_C is not None:
         norm = flat.norm()
         scale = min(1.0, clip_C / (norm.item() + 1e-12))
         out = [g * scale for g in out]
-        if sigma > 0.0:
-            out = [g + torch.randn(g.shape, generator=gen, device=g.device) * (sigma * clip_C) for g in out]
+    if sigma > 0.0:
+        out = [g + torch.randn(g.shape, generator=gen, device=g.device) * (sigma * clip_C) for g in out]
     return out
 
 
