@@ -97,8 +97,12 @@ def krum(client_states: list[dict], f: int, multi_m: int = 1) -> dict:
     """
     keys = _float_keys(client_states[0])
     flats = torch.stack([_flatten(s, keys) for s in client_states])  # (n, D)
-    scores = _krum_scores(flats, f)
     n = flats.shape[0]
+    if n < 2 * f + 3:
+        # Blanchard et al. 2017 requires n >= 2f+3 for the selection
+        # guarantee; with fewer clients Krum degenerates silently.
+        raise ValueError(f"krum: requires n >= 2f+3 (got n={n}, f={f})")
+    scores = _krum_scores(flats, f)
     m = max(1, min(multi_m, n))
     chosen = torch.topk(scores, m, largest=False).indices
     selected = flats[chosen].mean(dim=0)
@@ -107,32 +111,41 @@ def krum(client_states: list[dict], f: int, multi_m: int = 1) -> dict:
 
 
 def bulyan(client_states: list[dict], f: int) -> dict:
-    """Bulyan: build a Multi-Krum selection pool of size n-2f, then
-    coordinate-wise trimmed mean (drop f each end) over that pool."""
+    """Bulyan (Mhamdi et al. 2018): build a Multi-Krum selection pool of
+    size theta = n-2f, then per coordinate average the beta = theta-2f
+    values *closest to the coordinate-wise median* of the pool.
+
+    The paper's full robustness guarantee requires n >= 4f+3; this
+    implementation only requires beta >= 1 (n >= 4f+1) to be runnable,
+    so callers operating below the 4f+3 threshold get a weakened
+    guarantee -- document it where the results are reported.
+    """
     keys = _float_keys(client_states[0])
     flats = torch.stack([_flatten(s, keys) for s in client_states])
     n = flats.shape[0]
-    pool_size = n - 2 * f
-    if pool_size < 1:
-        raise ValueError(f"bulyan: n-2f ({pool_size}) must be >= 1")
+    theta = n - 2 * f
+    beta = theta - 2 * f
+    if beta < 1:
+        raise ValueError(
+            f"bulyan: needs theta-2f = n-4f >= 1 (got n={n}, f={f})")
 
-    # Iteratively pick Multi-Krum winners into the pool.
+    # Stage 1: iteratively pick Multi-Krum winners into the pool.
     remaining = list(range(n))
     pool_idx = []
-    while len(pool_idx) < pool_size and remaining:
+    while len(pool_idx) < theta and remaining:
         sub = flats[remaining]
         scores = _krum_scores(sub, f)
         best_local = int(torch.argmin(scores).item())
         pool_idx.append(remaining[best_local])
         remaining.pop(best_local)
 
-    pool = flats[pool_idx]  # (pool_size, D)
-    # Coordinate-wise trimmed mean over the pool.
-    beta = min(f, (pool.shape[0] - 1) // 2)
-    sorted_vals, _ = pool.sort(dim=0)
-    if beta > 0:
-        sorted_vals = sorted_vals[beta:pool.shape[0] - beta]
-    agg = sorted_vals.mean(dim=0)
+    pool = flats[pool_idx]  # (theta, D)
+    # Stage 2: per coordinate, average the beta values closest to the
+    # coordinate-wise median (NOT a symmetric sorted trim -- they differ
+    # when the honest updates are skewed).
+    med = pool.median(dim=0).values
+    closest = (pool - med).abs().argsort(dim=0)[:beta]  # (beta, D)
+    agg = pool.gather(0, closest).mean(dim=0)
     out = _unflatten(agg, client_states[0], keys)
     return _passthrough_int_keys(out, client_states[0])
 
