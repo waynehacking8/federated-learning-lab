@@ -66,6 +66,15 @@ def attach_scaffold(clients: list) -> None:
     # state dict to know shapes). c_global is held by the aggregator
     # since it is round-stateful and shared across clients.
     for client in clients:
+        # Option II recovers the average corrected gradient as
+        # (x - y_i) / (K * lr), which only holds for plain SGD; with
+        # momentum the parameter path no longer equals the gradient sum.
+        momentum = getattr(client, "momentum", 0.0)
+        if momentum:
+            raise ValueError(
+                f"SCAFFOLD Option II requires momentum=0 (client "
+                f"{getattr(client, 'client_id', '?')} has momentum={momentum})"
+            )
         client._scaffold_c_local = None
         client._scaffold_c_global_ref = None  # populated by aggregator before round
         client._scaffold_round_outputs = None

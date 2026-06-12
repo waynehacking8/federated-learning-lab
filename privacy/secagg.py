@@ -5,9 +5,17 @@ sends one share to each peer, and each peer sums the shares it
 received, then the server-side sum of peer-sums recovers
 ``sum_k update_k`` without ever revealing any individual update.
 
-This is NOT the full SecAgg protocol -- no DH key exchange, no Shamir
-threshold sharing, no malicious-client tolerance. It only demonstrates
-the core additive-secret-sharing primitive.
+This is NOT the full SecAgg protocol (Bonawitz et al. 2017) -- no DH
+key exchange, no pairwise PRG masks, no Shamir threshold sharing, no
+dropout/malicious-client tolerance. It only demonstrates the core
+additive-secret-sharing primitive.
+
+Caveat for the security-minded: information-theoretically hiding
+additive shares require uniform masks over a finite group (integers
+mod 2^k after quantization). The Gaussian real-valued shares used here
+leak a small amount of information (the last share is
+``update - sum(noise)`` with finite-variance noise), which is fine for
+a demo of the aggregation identity but not for a real deployment.
 """
 
 from __future__ import annotations

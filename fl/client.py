@@ -15,14 +15,13 @@ FedAvg / FedProx as described in the original papers.
 
 from __future__ import annotations
 
+import copy
 from dataclasses import dataclass, field
 from typing import Callable, Optional
 
 import torch
 from torch import nn
 from torch.utils.data import DataLoader, Dataset, Subset
-
-from fl.models.cnn import make_mnist_cnn
 
 
 def _state_to_cpu(state: dict) -> dict:
@@ -74,13 +73,12 @@ class Client:
     ) -> tuple[dict, int]:
         """Train ``self._local_model`` from ``global_state`` and return CPU state.
 
-        ``model`` is the server's reference architecture; we ignore the
-        instance itself and reuse a persistent local model on
-        ``self.device`` to avoid per-round deepcopy. The first call
-        instantiates the local model.
+        ``model`` is the server's reference architecture; the first call
+        deep-copies it onto ``self.device`` and later calls reuse that
+        persistent local model to avoid a per-round deepcopy.
         """
         if self._local_model is None:
-            self._local_model = make_mnist_cnn().to(self.device)
+            self._local_model = copy.deepcopy(model).to(self.device)
         local_model = self._local_model
         local_model.load_state_dict(
             {k: v.to(self.device, non_blocking=True) for k, v in global_state.items()}

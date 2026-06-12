@@ -3,7 +3,8 @@
 Frozen DistilBERT + LoRA adapters on attention q/v projections. Only
 adapter weights (+ classifier head) are federated. Two strategies:
     - FedIT:      average A and B (+ classifier).
-    - FedSA-LoRA: average only A (+ classifier); keep B local per client.
+    - FedSA-LoRA: average only A; keep B AND the classifier head local
+                  per client (see FedSALoRAAggregator docstring for why).
 
 Gates:
     - IID: FedIT reaches >= 90% of centralized-LoRA accuracy within 20 rounds.

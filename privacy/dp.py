@@ -53,17 +53,26 @@ def add_gaussian_noise(grad: torch.Tensor, noise_scale: float) -> torch.Tensor:
 
 
 def naive_epsilon(noise_scale: float, sample_rate: float, steps: int, delta: float = 1e-5) -> float:
-    """Naive composition (Abadi 2016 eq. 3) epsilon estimator.
+    """Heuristic ballpark epsilon via advanced composition -- NOT a bound.
 
-    This is a strict upper bound that ignores subsampling amplification
-    and RDP composition, so it overshoots the true epsilon by 2-3 orders
-    of magnitude. Prefer ``rdp_epsilon`` for a meaningful number; this is
-    kept only to show how loose naive composition is.
+    Two caveats make this a back-of-the-envelope number only:
+      1. The per-step calibration ``eps = sqrt(2 ln(1.25/delta)) / sigma``
+         (Dwork & Roth, Thm 3.22) is only valid for eps <= 1, i.e.
+         sigma >= ~4.84 at delta=1e-5; at smaller sigma it is not a
+         valid (eps, delta) guarantee at all.
+      2. The advanced-composition formula below drops the
+         ``T * eps * (e^eps - 1)`` term and the delta-budget split, so
+         even where (1) holds it understates the composed bound.
+
+    It also ignores subsampling amplification, so against the RDP
+    accountant it overshoots by 2-3 orders of magnitude. Use
+    ``rdp_epsilon`` for every reported number; this exists only to
+    illustrate why naive composition is never used in practice.
     """
     # Per-step epsilon under (epsilon, delta)-DP for Gaussian mechanism:
     #   epsilon_step approx sqrt(2 * ln(1.25 / delta)) / sigma
     eps_step = math.sqrt(2 * math.log(1.25 / delta)) / max(noise_scale, 1e-12)
-    # Strong composition for T steps:
+    # Advanced composition for T steps (leading term only):
     #   epsilon_total approx sqrt(2 * T * ln(1 / delta)) * eps_step
     return math.sqrt(2 * steps * math.log(1 / delta)) * eps_step
 
@@ -146,9 +155,9 @@ class DPSGDClient:
 
     def local_update(self, model: nn.Module, global_state: dict) -> tuple[dict, int]:
         if self._local_model is None:
-            from fl.models.cnn import make_mnist_cnn
+            import copy
 
-            self._local_model = make_mnist_cnn().to(self.device)
+            self._local_model = copy.deepcopy(model).to(self.device)
         local_model = self._local_model
         local_model.load_state_dict(
             {k: v.to(self.device, non_blocking=True) for k, v in global_state.items()}
