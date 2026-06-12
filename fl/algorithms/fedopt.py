@@ -18,9 +18,15 @@ buffers. With server-Adam this is FedAdam; with Yogi, FedYogi.
     w_{t+1} = w_t - lr_server * m_t / (sqrt(v_t) + tau)
 
 tau = 1e-3 is the adaptivity floor from Reddi 2020 (larger than vanilla
-Adam's epsilon). The aggregator is stateful (holds m, v, and its own
-copy of the global weights) and is pluggable on top of FedAvg-style
-client updates.
+Adam's epsilon). Following Algorithm 2 of the paper exactly: v is
+initialized to tau^2 (so the denominator is well-conditioned from round
+1) and there is NO Adam-style bias correction -- the paper's update uses
+m_t and v_t directly. (Bias correction is only justified for
+zero-initialized EMAs; v_0 = tau^2 is not zero-initialized, and
+Adagrad's running sum is not an EMA at all.)
+
+The aggregator is stateful (holds m, v, and its own copy of the global
+weights) and is pluggable on top of FedAvg-style client updates.
 """
 
 from __future__ import annotations
@@ -51,9 +57,10 @@ class FedOptAggregator:
         self.float_keys = [k for k, v in init_state.items() if v.is_floating_point()]
         self.w = {k: init_state[k].detach().cpu().to(torch.float32).clone() for k in self.float_keys}
         self.m = {k: torch.zeros_like(self.w[k]) for k in self.float_keys}
-        self.v = {k: torch.zeros_like(self.w[k]) for k in self.float_keys}
+        # Reddi 2020, Algorithm 2: v_0 = tau^2 keeps the adaptive
+        # denominator well-conditioned from the first round.
+        self.v = {k: torch.full_like(self.w[k], tau**2) for k in self.float_keys}
         self._template = {k: v.clone() for k, v in init_state.items()}
-        self.t = 0
 
     def aggregate(self, client_states: list[dict], sample_sizes: list[int]) -> dict:
         total = float(sum(sample_sizes))
@@ -61,7 +68,6 @@ class FedOptAggregator:
             raise ValueError("sample_sizes sum to zero")
         weights = [n / total for n in sample_sizes]
 
-        self.t += 1
         out: dict[str, torch.Tensor] = {}
         for key in client_states[0].keys():
             first = client_states[0][key]
@@ -84,8 +90,7 @@ class FedOptAggregator:
             else:  # adagrad
                 self.v[key] = self.v[key] + g2
 
-            m_hat = self.m[key] / (1 - self.beta1 ** self.t)
-            v_hat = self.v[key] / (1 - self.beta2 ** self.t)
-            self.w[key] = self.w[key] - self.server_lr * m_hat / (v_hat.sqrt() + self.tau)
+            # Paper-exact update (no bias correction; see module docstring).
+            self.w[key] = self.w[key] - self.server_lr * self.m[key] / (self.v[key].sqrt() + self.tau)
             out[key] = self.w[key].to(first.dtype)
         return out
