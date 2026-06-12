@@ -40,3 +40,6 @@ results/cache/
 # wandb / mlflow
 wandb/
 mlruns/
+
+# Claude Code
+.claude/
